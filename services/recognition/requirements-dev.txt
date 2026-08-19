@@ -1,0 +1,17 @@
+-r requirements.txt
+
+# Test and smoke validation
+pytest>=8.0
+pytest-asyncio>=0.23
+requests>=2.32
+
+# Custom 50 mm marker calibration, CV diagnostics, and legacy ArUco compatibility.
+# opencv-contrib provides both the core perspective tools and cv2.aruco fallback.
+opencv-contrib-python-headless>=4.8
+
+# Dataset inspection, metrics, and training-data reports
+pandas>=2.2
+scikit-learn>=1.4
+matplotlib>=3.8
+tqdm>=4.66
+PyYAML>=6.0

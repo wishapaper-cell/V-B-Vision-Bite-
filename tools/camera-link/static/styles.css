@@ -1,0 +1,665 @@
+:root {
+  --ink: #101713;
+  --paper: #e8eadf;
+  --paper-deep: #d8dccb;
+  --acid: #c8ff3d;
+  --ember: #ff5a36;
+  --muted: #727b72;
+  --line: rgba(16, 23, 19, 0.18);
+  --shadow: 0 22px 70px rgba(19, 30, 22, 0.17);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html {
+  min-height: 100%;
+  background: var(--paper);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--ink);
+  font-family: "Bahnschrift", "DIN Alternate", "Microsoft YaHei UI", sans-serif;
+  background:
+    radial-gradient(circle at 87% 12%, rgba(200, 255, 61, 0.33), transparent 27rem),
+    linear-gradient(135deg, var(--paper), #f1f2e9 48%, var(--paper-deep));
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+}
+
+.monitor-shell {
+  width: min(1540px, calc(100% - 56px));
+  margin: 0 auto;
+  padding: 36px 0 52px;
+}
+
+.topbar,
+.capture-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+  animation: rise 600ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.brand-mark {
+  width: 43px;
+  height: 43px;
+  border: 9px solid var(--ink);
+  border-right-color: var(--acid);
+  border-radius: 50%;
+  transform: rotate(-28deg);
+  box-shadow: inset 0 0 0 2px var(--paper);
+}
+
+.kicker,
+.panel-label,
+.stage-header,
+.stage-footer {
+  margin: 0 0 7px;
+  font-family: "Consolas", "Microsoft YaHei UI", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-family: "Arial Narrow", "Bahnschrift Condensed", "Microsoft YaHei UI", sans-serif;
+  font-size: clamp(32px, 4vw, 62px);
+  font-stretch: condensed;
+  letter-spacing: -0.055em;
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+.connection-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 154px;
+  padding: 11px 15px;
+  border: 1px solid var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  background: rgba(255,255,255,.32);
+}
+
+.signal-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--muted);
+  box-shadow: 0 0 0 4px rgba(114, 123, 114, 0.16);
+}
+
+.connection-badge.live .signal-dot {
+  background: var(--acid);
+  box-shadow: 0 0 0 4px rgba(200, 255, 61, 0.22), 0 0 18px var(--acid);
+  animation: pulse 1.6s ease-out infinite;
+}
+
+.connection-badge.error .signal-dot {
+  background: var(--ember);
+  box-shadow: 0 0 0 4px rgba(255, 90, 54, 0.2);
+}
+
+.monitor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 22px;
+  padding-top: 22px;
+}
+
+.stage-card,
+.panel,
+.capture-stage,
+.capture-readout,
+.notice,
+.capture-log {
+  border: 1px solid var(--ink);
+  background: rgba(241, 242, 233, 0.72);
+  box-shadow: var(--shadow);
+}
+
+.stage-card {
+  min-width: 0;
+  animation: rise 700ms 80ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+.stage-header,
+.stage-footer {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: 13px 16px;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.stage-footer {
+  background: transparent;
+  color: var(--ink);
+  border-top: 1px solid var(--ink);
+}
+
+.video-stage {
+  position: relative;
+  min-height: 500px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(200,255,61,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200,255,61,.035) 1px, transparent 1px),
+    #0b100d;
+  background-size: 38px 38px;
+}
+
+.video-stage img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  background: #070a08;
+}
+
+.empty-state {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  padding: 30px;
+  color: #9aa59b;
+  text-align: center;
+}
+
+.empty-title {
+  margin: 24px 0 6px;
+  color: var(--acid);
+  font-family: "Consolas", monospace;
+  font-size: 13px;
+  letter-spacing: .2em;
+}
+
+.empty-state p:last-child {
+  max-width: 360px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.reticle {
+  position: relative;
+  width: 98px;
+  height: 98px;
+  border: 1px solid rgba(200,255,61,.55);
+  border-radius: 50%;
+}
+
+.reticle::before,
+.reticle::after {
+  content: "";
+  position: absolute;
+  background: rgba(200,255,61,.55);
+}
+
+.reticle::before {
+  top: 50%;
+  left: -20px;
+  width: 138px;
+  height: 1px;
+}
+
+.reticle::after {
+  top: -20px;
+  left: 50%;
+  width: 1px;
+  height: 138px;
+}
+
+.reticle i {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--acid);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.scanline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -3px;
+  height: 2px;
+  opacity: .55;
+  background: linear-gradient(90deg, transparent, var(--acid), transparent);
+  animation: scan 4s linear infinite;
+}
+
+.corner {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-color: var(--acid);
+  border-style: solid;
+}
+
+.top-left { top: 18px; left: 18px; border-width: 2px 0 0 2px; }
+.top-right { top: 18px; right: 18px; border-width: 2px 2px 0 0; }
+.bottom-left { bottom: 18px; left: 18px; border-width: 0 0 2px 2px; }
+.bottom-right { bottom: 18px; right: 18px; border-width: 0 2px 2px 0; }
+
+.telemetry {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.panel {
+  padding: 19px;
+  box-shadow: none;
+  animation: rise 650ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+.panel:nth-child(2) { animation-delay: 80ms; }
+.panel:nth-child(3) { animation-delay: 140ms; }
+.panel:nth-child(4) { animation-delay: 200ms; }
+
+.panel-label {
+  color: var(--muted);
+}
+
+.panel h2 {
+  margin: 16px 0 8px;
+  font-size: 24px;
+  letter-spacing: -.04em;
+}
+
+.panel-copy,
+.diagnostic-panel p:last-child {
+  margin: 0;
+  color: #4d574f;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.endpoint-field {
+  display: block;
+  margin: 18px 0 10px;
+}
+
+.endpoint-field span {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.endpoint-field input {
+  width: 100%;
+  padding: 11px 10px;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  color: var(--ink);
+  background: rgba(255,255,255,.38);
+  font-family: "Consolas", monospace;
+  font-size: 12px;
+}
+
+#copyButton,
+.capture-controls button {
+  min-height: 43px;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  padding: 0 17px;
+  color: var(--paper);
+  background: var(--ink);
+  font-weight: 700;
+  transition: transform 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+#copyButton:hover,
+.capture-controls button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: var(--acid);
+  color: var(--ink);
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--ember);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: .42;
+}
+
+.microcopy {
+  min-height: 16px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.metric-list {
+  display: grid;
+}
+
+.metric {
+  display: grid;
+  grid-template-columns: 1fr auto 26px;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.metric:last-child {
+  border-bottom: 0;
+}
+
+.metric span {
+  font-size: 12px;
+}
+
+.metric strong {
+  font-family: "Consolas", monospace;
+  font-size: 23px;
+}
+
+.metric small {
+  color: var(--muted);
+  font-family: "Consolas", monospace;
+  font-size: 10px;
+}
+
+.device-panel dl,
+.device-panel dd {
+  margin: 0;
+}
+
+.device-panel dl > div {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.device-panel dl > div:last-child {
+  border-bottom: 0;
+}
+
+.device-panel dt {
+  color: var(--muted);
+}
+
+.device-panel dd {
+  overflow: hidden;
+  font-family: "Consolas", monospace;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.capture-shell {
+  width: min(720px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 26px 0 44px;
+}
+
+.capture-header {
+  align-items: center;
+}
+
+.capture-header h1 {
+  font-size: clamp(34px, 9vw, 55px);
+}
+
+.capture-stage {
+  position: relative;
+  margin-top: 18px;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #080c09;
+  animation: rise 650ms 70ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+.capture-stage video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.capture-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  padding: 30px;
+  color: #cbd1c9;
+  text-align: center;
+}
+
+.capture-empty h2 {
+  margin: 18px 0 5px;
+  color: var(--paper);
+}
+
+.capture-empty p {
+  max-width: 360px;
+  margin: 0;
+  color: #8d978e;
+  line-height: 1.6;
+}
+
+.lens-glyph {
+  width: 66px;
+  height: 66px;
+  border: 2px solid var(--acid);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 15px #080c09, inset 0 0 0 17px rgba(200,255,61,.45);
+}
+
+.capture-reticle {
+  position: absolute;
+  inset: 12%;
+  border: 1px solid rgba(200,255,61,.35);
+  pointer-events: none;
+}
+
+.capture-reticle::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--acid);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.capture-controls {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 9px;
+  margin: 12px 0;
+}
+
+.capture-controls .primary-action {
+  color: var(--ink);
+  background: var(--acid);
+}
+
+.capture-readout {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  box-shadow: none;
+}
+
+.capture-readout > div {
+  display: grid;
+  min-width: 0;
+  padding: 16px;
+  border-right: 1px solid var(--ink);
+}
+
+.capture-readout > div:last-child {
+  border-right: 0;
+}
+
+.capture-readout span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.capture-readout strong {
+  margin-top: 8px;
+  overflow: hidden;
+  font-family: "Consolas", monospace;
+  font-size: 24px;
+  text-overflow: ellipsis;
+}
+
+.capture-readout small {
+  color: var(--muted);
+  font-family: "Consolas", monospace;
+  font-size: 10px;
+}
+
+.notice,
+.capture-log {
+  margin-top: 12px;
+  padding: 16px;
+  box-shadow: none;
+}
+
+.notice {
+  border-color: var(--ember);
+  background: rgba(255,90,54,.08);
+}
+
+.notice p {
+  margin: 7px 0 0;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.capture-log pre {
+  min-height: 52px;
+  margin: 13px 0 0;
+  overflow: auto;
+  color: #3f4942;
+  font: 12px/1.6 "Consolas", monospace;
+  white-space: pre-wrap;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scan {
+  0% { top: -3px; }
+  100% { top: calc(100% + 3px); }
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(200,255,61,.35), 0 0 18px var(--acid); }
+  75%, 100% { box-shadow: 0 0 0 10px rgba(200,255,61,0), 0 0 18px var(--acid); }
+}
+
+@media (max-width: 980px) {
+  .monitor-shell {
+    width: min(100% - 28px, 760px);
+  }
+
+  .monitor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .video-stage {
+    min-height: 0;
+  }
+
+  .telemetry {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 620px) {
+  .topbar,
+  .capture-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .connection-badge {
+    min-width: 0;
+  }
+
+  .telemetry {
+    grid-template-columns: 1fr;
+  }
+
+  .capture-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .capture-readout strong {
+    font-size: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

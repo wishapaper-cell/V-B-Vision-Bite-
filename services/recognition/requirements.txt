@@ -1,0 +1,10 @@
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+numpy>=1.26
+pillow>=10.0
+qrcode>=7.4
+cryptography>=42.0
+opencv-contrib-python-headless>=4.8
+ultralytics>=8.3
+av>=12.0

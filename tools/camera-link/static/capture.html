@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Rokid Camera Link · Capture</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="capture-page">
+    <div class="grain" aria-hidden="true"></div>
+    <main class="capture-shell">
+      <header class="capture-header">
+        <div>
+          <p class="kicker">OPTICAL SOURCE / MOBILE</p>
+          <h1>摄像头采集端</h1>
+        </div>
+        <div id="captureBadge" class="connection-badge waiting">
+          <span class="signal-dot"></span>
+          <span id="captureStatus">待启动</span>
+        </div>
+      </header>
+
+      <section class="capture-stage">
+        <video id="cameraPreview" autoplay muted playsinline></video>
+        <canvas id="captureCanvas" hidden></canvas>
+        <div id="captureEmpty" class="capture-empty">
+          <div class="lens-glyph" aria-hidden="true"></div>
+          <h2>等待摄像头权限</h2>
+          <p>点击下方按钮，选择眼镜或当前设备可用的后置摄像头。</p>
+        </div>
+        <div class="capture-reticle" aria-hidden="true"></div>
+      </section>
+
+      <section class="capture-controls">
+        <button id="cameraButton" class="primary-action" type="button">打开摄像头</button>
+        <button id="streamButton" type="button" disabled>开始传输</button>
+        <button id="switchButton" type="button" disabled>切换镜头</button>
+      </section>
+
+      <section class="capture-readout">
+        <div>
+          <span>已发送</span>
+          <strong id="sentValue">0</strong>
+          <small>帧</small>
+        </div>
+        <div>
+          <span>发送间隔</span>
+          <strong>700</strong>
+          <small>ms</small>
+        </div>
+        <div>
+          <span>状态</span>
+          <strong id="uploadValue">IDLE</strong>
+          <small id="failureValue">0 errors</small>
+        </div>
+      </section>
+
+      <section id="securityNotice" class="notice" hidden>
+        <strong>浏览器安全限制</strong>
+        <p>
+          当前不是 HTTPS 安全页面，浏览器可能拒绝摄像头权限。这不代表电脑接收端失败；
+          Rokid 原生 SDK 后续可以直接向相同接口上传 JPEG。
+        </p>
+      </section>
+
+      <section class="capture-log">
+        <p class="panel-label">ACTIVITY</p>
+        <pre id="activityLog">等待操作…</pre>
+      </section>
+    </main>
+    <script src="/capture.js"></script>
+  </body>
+</html>

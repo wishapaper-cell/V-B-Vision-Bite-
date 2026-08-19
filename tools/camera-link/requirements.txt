@@ -1,0 +1,5 @@
+av>=14,<17
+pillow>=10,<13
+numpy>=1.26
+opencv-contrib-python-headless>=4.8
+ultralytics>=8.3

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>手机视频采集</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body class="capture-body">
+    <main class="capture-shell">
+      <section class="phone-panel">
+        <header class="capture-head">
+          <div>
+            <p class="eyebrow">Mobile Capture</p>
+            <h1>手机采集端</h1>
+          </div>
+          <span id="mobileStatus" class="pill waiting">初始化</span>
+        </header>
+
+        <div class="phone-video">
+          <video id="cameraPreview" playsinline autoplay muted></video>
+          <canvas id="captureCanvas" hidden></canvas>
+          <div class="reticle"></div>
+          <div id="cameraEmpty" class="camera-empty">等待摄像头授权</div>
+          <div id="cameraDebug" class="camera-debug">未连接摄像头</div>
+        </div>
+
+        <section class="mobile-controls">
+          <button id="joinBtn" type="button">连接会话</button>
+          <button id="cameraBtn" type="button" disabled>授权摄像头</button>
+          <button id="switchCameraBtn" type="button" disabled>切换镜头</button>
+          <button id="streamBtn" type="button" disabled>开始推流</button>
+        </section>
+
+        <section class="mobile-readout">
+          <label>
+            <span>Session</span>
+            <input id="mobileSessionId" readonly />
+          </label>
+          <label>
+            <span>采集状态</span>
+            <textarea id="mobileHint" readonly>请先连接会话。</textarea>
+          </label>
+        </section>
+
+        <section class="mobile-analysis">
+          <div class="mobile-analysis-head">
+            <div>
+              <p class="eyebrow">Recognition</p>
+              <h2>识别结果</h2>
+            </div>
+            <span id="mobileFrameMeta">0 帧</span>
+          </div>
+          <div class="mobile-metrics">
+            <div><span>总重量</span><strong id="mobileTotalWeight">0g</strong></div>
+            <div><span>热量</span><strong id="mobileTotalCalories">0kcal</strong></div>
+            <div><span>质量</span><strong id="mobileQuality">0%</strong></div>
+          </div>
+          <div id="mobileFoods" class="mobile-foods">
+            <span>连接并开始推流后，这里会显示识别出的食物。</span>
+          </div>
+        </section>
+      </section>
+    </main>
+    <script src="/static/capture.js"></script>
+  </body>
+</html>

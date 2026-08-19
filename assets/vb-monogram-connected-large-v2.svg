@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Enlarged connected V and B glass ribbon monogram</title>
+  <desc id="desc">A large V monogram whose right diagonal flows through a short rounded shoulder into the left spine of a B.</desc>
+  <defs>
+    <linearGradient id="bg" x1="100" y1="40" x2="920" y2="980" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f7fffc"/>
+      <stop offset="1" stop-color="#d2f4e8"/>
+    </linearGradient>
+    <linearGradient id="ribbon" x1="250" y1="230" x2="850" y2="800" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#197457"/>
+      <stop offset="1" stop-color="#36b08b"/>
+    </linearGradient>
+    <radialGradient id="bubble" cx="0" cy="0" r="1" gradientTransform="translate(405 345) rotate(48) scale(470)">
+      <stop stop-color="#fff" stop-opacity=".78"/>
+      <stop offset="1" stop-color="#c5f1e2" stop-opacity=".28"/>
+    </radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#126448" flood-opacity=".2"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <circle cx="512" cy="500" r="362" fill="url(#bubble)" stroke="#fff" stroke-opacity=".82" stroke-width="6"/>
+  <path d="M215 285L455 750L572.5 260H615V775M615 260A185 130 0 0 1 615 520M615 520A212.5 130 0 0 1 615 780" fill="none" stroke="url(#ribbon)" stroke-width="82" stroke-linecap="round" stroke-linejoin="round" filter="url(#shadow)"/>
+  <path d="M207 274L447 739L564 249H607V764M607 249A185 130 0 0 1 607 509M607 509A212.5 130 0 0 1 607 769" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="798" cy="170" r="13" fill="#fff" fill-opacity=".62" stroke="#42b58f" stroke-opacity=".45" stroke-width="2"/>
+  <circle cx="840" cy="210" r="9" fill="#fff" fill-opacity=".55"/>
+</svg>

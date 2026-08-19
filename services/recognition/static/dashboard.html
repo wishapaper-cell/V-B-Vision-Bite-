@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>实时食物克重识别 Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Realtime Video Nutrition</p>
+          <h1>食物视频克重识别系统</h1>
+        </div>
+        <div class="top-actions">
+          <button id="createSessionBtn" type="button">新建测量</button>
+          <button id="finishBtn" type="button" disabled>生成报告</button>
+        </div>
+      </header>
+
+      <section class="dashboard-grid">
+        <aside class="panel session-panel">
+          <div class="panel-head">
+            <h2>会话连接</h2>
+            <span id="statusPill" class="pill waiting">未创建</span>
+          </div>
+          <img id="qrImage" class="qr-image" alt="手机采集二维码" />
+          <div class="session-fields">
+            <label>
+              <span>Session ID</span>
+              <input id="sessionId" readonly />
+            </label>
+            <label>
+              <span>手机采集地址</span>
+              <textarea id="captureUrl" readonly></textarea>
+            </label>
+          </div>
+          <div class="copy-row">
+            <button id="copyUrlBtn" type="button" disabled>复制采集地址</button>
+            <button id="openCaptureBtn" type="button" disabled>本机打开采集页</button>
+          </div>
+          <ul class="connection-list">
+            <li><b></b>Android 浏览器 getUserMedia 授权</li>
+            <li><b></b>Canvas 连续抽帧 JPEG 上传</li>
+            <li><b></b>主体优先识别，过滤包装纸/桌面/碎屑</li>
+            <li><b></b>识别烹饪方式并修正热量与脂肪</li>
+          </ul>
+        </aside>
+
+        <section class="panel video-panel">
+          <div class="panel-head">
+            <div>
+              <h2>实时视频与主体分割</h2>
+              <p id="videoMeta">等待手机推流</p>
+            </div>
+            <span id="analyzerLabel" class="model-label">Analyzer: -</span>
+          </div>
+          <div class="video-stage">
+            <img id="latestFrame" alt="手机最新上传画面" />
+            <svg id="overlaySvg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+            <div id="emptyVideo" class="empty-video">等待手机授权摄像头并开始采集</div>
+            <div id="guidanceBadge" class="guidance">请新建测量并扫码</div>
+          </div>
+        </section>
+
+        <section class="panel summary-panel">
+          <div class="panel-head">
+            <h2>营养汇总</h2>
+            <strong id="overallConfidence">0%</strong>
+          </div>
+          <div class="summary-metrics">
+            <div>
+              <span>总重量</span>
+              <strong id="totalWeight">0g</strong>
+              <small id="totalWeightError">±0g</small>
+            </div>
+            <div><span>收敛度</span><strong id="overallConvergence">0%</strong></div>
+            <div><span>热量</span><strong id="totalCalories">0kcal</strong></div>
+            <div><span>蛋白质</span><strong id="totalProtein">0g</strong></div>
+            <div><span>碳水</span><strong id="totalCarbs">0g</strong></div>
+            <div><span>脂肪</span><strong id="totalFat">0g</strong></div>
+          </div>
+        </section>
+
+        <section class="panel summary-panel">
+          <div class="panel-head">
+            <h2>实际摄入</h2>
+            <strong id="intakeEventCount">0 口</strong>
+          </div>
+          <div class="summary-metrics">
+            <div>
+              <span>已摄入重量</span>
+              <strong id="intakeWeight">0g</strong>
+            </div>
+            <div><span>已摄入热量</span><strong id="intakeCalories">0kcal</strong></div>
+            <div><span>最近动作</span><strong id="lastIntakeState">--</strong></div>
+          </div>
+        </section>
+
+        <section class="panel quality-panel">
+          <div class="panel-head">
+            <h2>测量质量</h2>
+            <strong id="qualityScore">0%</strong>
+          </div>
+          <div id="qualityBars" class="quality-bars"></div>
+        </section>
+
+        <section class="panel table-panel">
+          <div class="panel-head">
+            <h2>主体识别结果</h2>
+            <span id="frameCount">0 frames</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>主体</th>
+                  <th>烹饪方式</th>
+                  <th>克重</th>
+                  <th>尺度校正</th>
+                  <th>热量</th>
+                  <th>蛋白质</th>
+                  <th>碳水</th>
+                  <th>脂肪</th>
+                  <th>稳定帧</th>
+                  <th>收敛度</th>
+                  <th>置信度</th>
+                </tr>
+              </thead>
+              <tbody id="foodRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel report-panel">
+          <div class="panel-head">
+            <h2>最终报告</h2>
+            <span id="reportState">未生成</span>
+          </div>
+          <pre id="reportJson"></pre>
+        </section>
+      </section>
+    </main>
+    <script src="/static/dashboard.js"></script>
+  </body>
+</html>
