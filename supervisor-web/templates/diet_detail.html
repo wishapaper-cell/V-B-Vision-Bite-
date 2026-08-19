@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}饮食记录详情{% endblock %}
+{% block page_title %}饮食记录详情{% endblock %}
+{% block page_desc %}查看餐食照片、文字描述及营养数据{% endblock %}
+{% block content %}
+<div class="detail-head"><div class="avatar large">{{ record.nickname[:1] }}</div><div><h2>{{ record.nickname }}</h2><p>{{ record.phone }} · 记录 #{{ record.id }}</p></div><a class="btn ghost" href="{{ url_for('user_diets', user_id=record.user_id) }}">返回该用户饮食分析</a></div>
+<div class="two-col">
+    <section class="panel">
+        <div class="panel-head"><div><h2>记录内容</h2><p>修改食物或克重后会重新计算营养</p></div></div>
+        <form class="profile-form" method="post">
+            <div class="form-grid">
+                <label>食物<select name="food_name" required>{% for food in foods %}<option value="{{ food.name }}" {{ 'selected' if food.name == record.food_name }}>{{ food.name }} · {{ food.calories_per_100g }} kcal/100g</option>{% endfor %}</select></label>
+                <label>克重（g）<input type="number" step="0.1" min="0.1" max="5000" name="weight_grams" value="{{ record.weight_grams }}" required></label>
+                <label>餐次<select name="meal_type"><option value="">未分类</option><option value="breakfast" {{ 'selected' if record.meal_type == 'breakfast' }}>早餐</option><option value="lunch" {{ 'selected' if record.meal_type == 'lunch' }}>午餐</option><option value="dinner" {{ 'selected' if record.meal_type == 'dinner' }}>晚餐</option><option value="snack" {{ 'selected' if record.meal_type == 'snack' }}>加餐</option></select></label>
+                <label>摄入时间<input type="datetime-local" name="intake_time" value="{{ record.intake_time[:16].replace(' ', 'T') if record.intake_time else '' }}"></label>
+            </div>
+            <label>文字描述<textarea name="description" rows="4">{{ record.description or '' }}</textarea></label>
+            <label>照片地址<input name="image_url" value="{{ record.image_url or '' }}" placeholder="用户端图片路径或完整 URL"></label>
+            <button class="btn primary">保存饮食记录</button>
+        </form>
+    </section>
+    <section class="panel">
+        <div class="panel-head"><div><h2>照片与营养</h2><p>当前记录保存的营养快照</p></div></div>
+        {% if record.image_url %}<img class="record-photo" src="{{ record.image_url if record.image_url.startswith('http') else 'http://127.0.0.1:5000' + record.image_url }}" alt="餐食照片">{% else %}<div class="empty">该记录没有餐食照片</div>{% endif %}
+        <div class="metric-grid">
+            <div class="metric"><span>热量</span><strong>{{ record.calories|round(1) }} kcal</strong></div><div class="metric"><span>蛋白质</span><strong>{{ record.protein_g|round(1) }} g</strong></div><div class="metric"><span>脂肪</span><strong>{{ record.fat_g|round(1) }} g</strong></div><div class="metric"><span>碳水</span><strong>{{ record.carbs_g|round(1) }} g</strong></div><div class="metric"><span>膳食纤维</span><strong>{{ record.fiber_g|round(1) }} g</strong></div><div class="metric"><span>来源</span><strong>{{ record.source_type or 'manual' }}</strong></div>
+        </div>
+    </section>
+</div>
+{% endblock %}

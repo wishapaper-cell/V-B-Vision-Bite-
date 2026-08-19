@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}受邀管理员注册{% endblock %}
+{% block content %}
+<div class="auth-card register-card">
+    <div class="auth-logo">食</div>
+    <h1>受邀管理员注册</h1>
+    <p>只有持有有效邀请码的人员才能提交注册申请。</p>
+    <form method="post">
+        <label>邀请码<input name="invite_code" value="{{ invite_code }}" required autocomplete="one-time-code" placeholder="输入超级管理员提供的邀请码"></label>
+        <label>管理员账号<input name="username" required minlength="4" maxlength="30" pattern="[A-Za-z0-9_]+" autocomplete="username" placeholder="4–30 位字母、数字或下划线"></label>
+        <label>显示名称<input name="display_name" required maxlength="30" placeholder="用于操作日志和后台显示"></label>
+        <label>邮箱（选填）<input type="email" name="email" autocomplete="email" placeholder="用于管理员身份联系"></label>
+        <label>密码<input type="password" name="password" required minlength="10" autocomplete="new-password" placeholder="至少 10 位，包含大小写字母和数字"></label>
+        <label>确认密码<input type="password" name="password_confirm" required minlength="10" autocomplete="new-password"></label>
+        <button class="btn primary full">提交注册申请</button>
+    </form>
+    <div class="auth-note">有效邀请码代表已经获得授权，注册完成后即可登录。</div>
+    <a class="invite-register-link" href="{{ url_for('login') }}">返回管理端登录</a>
+</div>
+{% endblock %}

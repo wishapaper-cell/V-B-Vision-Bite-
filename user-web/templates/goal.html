@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+{% block title %}目标看板 - V&amp;B{% endblock %}
+
+{% block hero %}
+{% set goal_names = {'weight_management': '体重管理', 'blood_sugar': '血糖管理', 'blood_pressure': '血压管理'} %}
+<div class="hero-banner">
+    <span class="hero-icon"><i data-lucide="target" style="width:40px;height:40px;"></i></span>
+    <div class="greeting">{{ now.strftime('%Y年%m月%d日') }} · {{ ['周一','周二','周三','周四','周五','周六','周日'][now.weekday()] }}</div>
+    <h1>{{ goal_names[user.health_goal] }}看板</h1>
+    <p class="subtitle">科学管理，健康每一天</p>
+</div>
+{% endblock %}
+
+{% block content %}
+{% set goal_pct = (today_cal / tdee * 100) if tdee > 0 else 0 %}
+{% set ring_color = 'var(--green)' if goal_pct <= 80 else ('var(--orange)' if goal_pct <= 100 else 'var(--red)') %}
+{% set ring_offset = (565.5 * (1 - ([goal_pct, 100]|min / 100))) %}
+
+<div class="card card-accent-top" style="text-align:center;">
+    <h2><i data-lucide="flame" class="icon-md"></i>今日热量进度</h2>
+    <div class="ring-container">
+        <svg width="180" height="180" viewBox="0 0 200 200">
+            <circle class="ring-bg" cx="100" cy="100" r="90"/>
+            <circle class="ring-fg" cx="100" cy="100" r="90"
+                stroke="{{ '#4CAF50' if goal_pct <= 80 else ('#FF9800' if goal_pct <= 100 else '#E53935') }}"
+                stroke-dasharray="565.5" stroke-dashoffset="{{ ring_offset }}"/>
+        </svg>
+        <div class="ring-center">
+            <div class="ring-value" style="color:{{ ring_color }};">{{ "%.0f"|format(goal_pct) }}<span style="font-size:18px;">%</span></div>
+            <div class="ring-unit">{{ "%.0f"|format(today_cal) }} / {{ tdee }} kcal</div>
+        </div>
+    </div>
+    {% if goal_pct > 100 %}
+    <p style="color:var(--red);font-weight:600;margin-top:8px;"><i data-lucide="alert-triangle" class="icon-sm"></i> 已超出今日预算</p>
+    {% elif goal_pct > 80 %}
+    <p style="color:var(--orange);font-weight:600;margin-top:8px;"><i data-lucide="clock" class="icon-sm"></i> 接近预算上限</p>
+    {% else %}
+    <p style="color:var(--green);font-weight:600;margin-top:8px;"><i data-lucide="check-circle" class="icon-sm"></i> 热量摄入在合理范围</p>
+    {% endif %}
+</div>
+
+<div class="stats">
+    <div class="stat-card green">
+        <div class="stat-icon"><i data-lucide="zap"></i></div>
+        <div class="stat-value">{{ tdee }}</div>
+        <div class="stat-label">每日 TDEE</div>
+        <div class="stat-sub">总热量消耗</div>
+    </div>
+    <div class="stat-card {{ 'red' if goal_pct > 100 else 'orange' }}">
+        <div class="stat-icon"><i data-lucide="utensils"></i></div>
+        <div class="stat-value" style="color:{{ '#E53935' if goal_pct > 100 else 'var(--text)' }};">{{ "%.0f"|format(today_cal) }}</div>
+        <div class="stat-label">已摄入 kcal</div>
+        <div class="stat-sub">今日累计</div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon"><i data-lucide="gauge"></i></div>
+        <div class="stat-value">{{ "%.0f"|format([tdee - today_cal, 0]|max) }}</div>
+        <div class="stat-label">剩余预算</div>
+        <div class="stat-sub">还可摄入</div>
+    </div>
+</div>
+
+<div class="card card-accent-top">
+    <h2><i data-lucide="activity" class="icon-md"></i>你的身体数据</h2>
+    <div class="stats" style="grid-template-columns:repeat(auto-fit, minmax(100px, 1fr));margin-bottom:0;">
+        <div class="stat-card green"><div class="stat-icon"><i data-lucide="flame"></i></div><div class="stat-value">{{ bmr }}</div><div class="stat-label">BMR kcal</div><div class="stat-sub">基础代谢</div></div>
+        <div class="stat-card blue"><div class="stat-icon"><i data-lucide="ruler"></i></div><div class="stat-value">{{ user.height }}</div><div class="stat-label">身高 cm</div></div>
+        <div class="stat-card orange"><div class="stat-icon"><i data-lucide="weight"></i></div><div class="stat-value">{{ user.weight }}</div><div class="stat-label">体重 kg</div></div>
+        <div class="stat-card purple"><div class="stat-icon"><i data-lucide="calendar-days"></i></div><div class="stat-value">{{ user.age }}</div><div class="stat-label">年龄</div></div>
+    </div>
+</div>
+
+{% if user.health_goal == 'weight_management' %}
+<div class="card card-accent-top">
+    <h2><i data-lucide="scale" class="icon-md"></i>体重管理方案</h2>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:16px;">基于 <strong style="color:var(--green);">Mifflin-St Jeor</strong> 公式 · 活动系数 ×1.2</p>
+    <div class="stats" style="margin-bottom:0;">
+        <div class="stat-card green">
+            <div class="stat-icon"><i data-lucide="trending-down"></i></div>
+            <div class="stat-value">{{ tdee - 500 }}</div>
+            <div class="stat-label">减脂期</div>
+            <div class="stat-sub">TDEE &minus; 500 kcal</div>
+        </div>
+        <div class="stat-card blue">
+            <div class="stat-icon"><i data-lucide="minus"></i></div>
+            <div class="stat-value">{{ tdee }}</div>
+            <div class="stat-label">维持期</div>
+            <div class="stat-sub">保持当前体重</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-icon"><i data-lucide="trending-up"></i></div>
+            <div class="stat-value">{{ tdee + 500 }}</div>
+            <div class="stat-label">增重期</div>
+            <div class="stat-sub">TDEE + 500 kcal</div>
+        </div>
+    </div>
+</div>
+
+{% elif user.health_goal == 'blood_sugar' %}
+<div class="card card-accent-top">
+    <h2><i data-lucide="droplets" class="icon-md"></i>血糖管理方案</h2>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:16px;">BMR <strong style="color:var(--green);">{{ bmr }} kcal</strong> · TDEE <strong style="color:var(--green);">{{ tdee }} kcal</strong> · 碳水占比建议 &le;50%</p>
+    <div class="stats" style="margin-bottom:0;">
+        <div class="stat-card green">
+            <div class="stat-icon"><i data-lucide="flame"></i></div>
+            <div class="stat-value">{{ tdee }}</div>
+            <div class="stat-label">每日热量目标</div>
+            <div class="stat-sub">总摄入上限</div>
+        </div>
+        <div class="stat-card blue">
+            <div class="stat-icon"><i data-lucide="wheat"></i></div>
+            <div class="stat-value">{{ "%.0f"|format(tdee * 0.5) }}</div>
+            <div class="stat-label">碳水上限 kcal</div>
+            <div class="stat-sub">占总热量 50%</div>
+        </div>
+        <div class="stat-card purple">
+            <div class="stat-icon"><i data-lucide="croissant"></i></div>
+            <div class="stat-value">{{ "%.0f"|format(tdee * 0.5 / 4) }}</div>
+            <div class="stat-label">碳水上限 g</div>
+            <div class="stat-sub">&asymp; {{ "%.0f"|format(tdee * 0.5 / 4 / 50) }} 碗米饭</div>
+        </div>
+    </div>
+    <div style="margin-top:16px;padding:14px;background:var(--blue-light);border-radius:var(--radius-sm);font-size:13px;color:var(--blue-dark);">
+        <strong>控糖建议</strong> 优先低 GI 食物 · 定时定量用餐 · 避免精制糖
+    </div>
+</div>
+
+{% elif user.health_goal == 'blood_pressure' %}
+<div class="card card-accent-top">
+    <h2><i data-lucide="heart-pulse" class="icon-md"></i>血压管理方案</h2>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:16px;">BMR <strong style="color:var(--green);">{{ bmr }} kcal</strong> · TDEE <strong style="color:var(--green);">{{ tdee }} kcal</strong></p>
+    <div class="stats" style="margin-bottom:0;">
+        <div class="stat-card green">
+            <div class="stat-icon"><i data-lucide="flame"></i></div>
+            <div class="stat-value">{{ tdee }}</div>
+            <div class="stat-label">每日热量目标</div>
+            <div class="stat-sub">总摄入上限</div>
+        </div>
+        <div class="stat-card purple">
+            <div class="stat-icon"><i data-lucide="minus-circle"></i></div>
+            <div class="stat-value">&le;2000</div>
+            <div class="stat-label">钠上限 mg</div>
+            <div class="stat-sub">WHO 推荐</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-icon"><i data-lucide="circle-dashed"></i></div>
+            <div class="stat-value">&le;5</div>
+            <div class="stat-label">盐上限 g</div>
+            <div class="stat-sub">&asymp; 一啤酒瓶盖</div>
+        </div>
+    </div>
+    <div style="margin-top:16px;padding:14px;background:var(--purple-light);border-radius:var(--radius-sm);font-size:13px;color:#6A1B9A;">
+        <strong>控压建议</strong> 减少加工食品 · 多吃蔬果补钾 · 定期监测血压
+    </div>
+</div>
+{% endif %}
+
+<!-- ═══ 每日营养目标 ═══ -->
+<div class="card card-accent-top">
+    <h2><i data-lucide="pill" class="icon-md"></i>每日营养目标</h2>
+    <p style="color:var(--text2);font-size:12px;margin-bottom:16px;">
+        基于 <strong>中国 DRIs 2023</strong> · <strong>WHO/FAO</strong> 国际标准{% if user.health_goal=='blood_pressure' %} · <strong>DASH</strong> 饮食{% endif %}计算
+    </p>
+    <div class="stats" style="margin-bottom:0;">
+        <div class="stat-card green">
+            <div class="stat-icon"><i data-lucide="beef"></i></div>
+            <div class="stat-value">{{ nutrition.protein_g }}</div>
+            <div class="stat-label">蛋白质 g</div>
+            <div class="stat-sub">{{ nutrition.protein_cal }} kcal</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-icon"><i data-lucide="oil"></i></div>
+            <div class="stat-value">{{ nutrition.fat_g }}</div>
+            <div class="stat-label">脂肪 g</div>
+            <div class="stat-sub">{{ nutrition.fat_cal }} kcal</div>
+        </div>
+        <div class="stat-card blue">
+            <div class="stat-icon"><i data-lucide="wheat"></i></div>
+            <div class="stat-value">{{ nutrition.carbs_g }}</div>
+            <div class="stat-label">碳水 g</div>
+            <div class="stat-sub">{{ nutrition.carbs_cal }} kcal</div>
+        </div>
+        <div class="stat-card purple">
+            <div class="stat-icon"><i data-lucide="leafy-green"></i></div>
+            <div class="stat-value">{{ nutrition.fiber_g }}</div>
+            <div class="stat-label">膳食纤维 g</div>
+            <div class="stat-sub">中国 DRIs</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-icon"><i data-lucide="droplets"></i></div>
+            <div class="stat-value">{{ "%.0f"|format(nutrition.water_ml / 1000) }}L</div>
+            <div class="stat-label">水</div>
+            <div class="stat-sub">{{ nutrition.water_ml }} ml</div>
+        </div>
+    </div>
+
+    {% if user.health_goal == 'blood_pressure' and nutrition.dash %}
+    <h3 style="margin-top:20px;font-size:14px;color:var(--text);"><i data-lucide="heart-pulse" class="icon-sm"></i> DASH 矿物质目标</h3>
+    <div class="stats" style="margin-bottom:0;">
+        <div class="stat-card purple">
+            <div class="stat-icon"><i data-lucide="minus-circle"></i></div>
+            <div class="stat-value">&le;{{ nutrition.dash.sodium_mg }}</div>
+            <div class="stat-label">钠 mg</div>
+            <div class="stat-sub">WHO 上限</div>
+        </div>
+        <div class="stat-card blue">
+            <div class="stat-icon"><i data-lucide="plus-circle"></i></div>
+            <div class="stat-value">{{ nutrition.dash.potassium_mg }}</div>
+            <div class="stat-label">钾 mg</div>
+            <div class="stat-sub">DASH 目标</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-icon"><i data-lucide="bone"></i></div>
+            <div class="stat-value">{{ nutrition.dash.calcium_mg }}</div>
+            <div class="stat-label">钙 mg</div>
+            <div class="stat-sub">DASH 目标</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-icon"><i data-lucide="zap"></i></div>
+            <div class="stat-value">{{ nutrition.dash.magnesium_mg }}</div>
+            <div class="stat-label">镁 mg</div>
+            <div class="stat-sub">DASH 目标</div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user.health_goal == 'blood_sugar' and nutrition.sugar_extra %}
+    <div style="margin-top:16px;padding:14px;background:var(--blue-light);border-radius:var(--radius-sm);font-size:13px;color:var(--blue-dark);">
+        <strong>备注</strong> {{ nutrition.sugar_extra.fiber_boost }} · {{ nutrition.sugar_extra.gi_note }}
+    </div>
+    {% endif %}
+</div>
+
+<!-- ═══ 微量元素摄入进度 ═══ -->
+{% set micros = [
+    ('sodium_mg', '钠', 'minus-circle', 'na', True, '<'),
+    ('potassium_mg', '钾', 'plus-circle', 'k', False, ''),
+    ('calcium_mg', '钙', 'bone', 'ca', False, ''),
+    ('magnesium_mg', '镁', 'zap', 'mg', False, ''),
+    ('iron_mg', '铁', 'droplets', 'fe', False, ''),
+] %}
+{% set micro_t = nutrition.micro_targets %}
+{% set micro_i = micro_intake %}
+<div class="card card-accent-top">
+    <h2><i data-lucide="flask-conical" class="icon-md"></i>微量元素摄入</h2>
+    <p style="color:var(--text2);font-size:12px;margin-bottom:18px;">
+        基于 <strong>中国 DRIs 2023</strong>{% if user.health_goal=='blood_pressure' %} · <strong>DASH</strong> 饮食{% endif %} · 今日实际摄入 vs 每日目标
+    </p>
+    <div class="micro-list">
+    {% for key, label, icon, cls, is_limit, prefix in micros %}
+        {% set intake = micro_i[key]|float %}
+        {% set target = micro_t[key]|float %}
+        {% set pct = (intake / target * 100) if target > 0 else 0 %}
+        {% if is_limit %}
+            {% if pct <= 80 %}{% set state = 'ok' %}
+            {% elif pct <= 100 %}{% set state = 'warn' %}
+            {% else %}{% set state = 'over' %}{% endif %}
+        {% else %}
+            {% if pct >= 80 %}{% set state = 'ok' %}
+            {% elif pct >= 50 %}{% set state = 'warn' %}
+            {% else %}{% set state = 'over' %}{% endif %}
+        {% endif %}
+        <div class="micro-row">
+            <div class="micro-label">
+                <i data-lucide="{{ icon }}" style="color:var(--{% if state=='ok' %}green{% elif state=='warn' %}orange{% else %}red{% endif %});"></i>{{ label }}
+            </div>
+            <div class="micro-bar-wrap">
+                <div class="micro-bar {{ cls }}" style="width:{{ [pct,100]|min }}%;"></div>
+            </div>
+            <div class="micro-val">
+                <strong>{{ "%.0f"|format(intake) }}</strong> / {{ prefix }}{{ "%.0f"|format(target) }} mg
+            </div>
+            <div class="micro-pct {{ state }}">{{ "%.0f"|format(pct) }}%</div>
+        </div>
+    {% endfor %}
+    </div>
+</div>
+
+<!-- 详细参考表 -->
+<div class="card" style="display:none;" id="nutritionDetail">
+    <h2><i data-lucide="table" class="icon-md"></i>营养参考标准</h2>
+    <table>
+        <tr><th>营养素</th><th>每日目标</th><th>热量占比</th><th>参考来源</th></tr>
+        <tr><td>蛋白质</td><td><strong>{{ nutrition.protein_g }} g</strong></td><td>{{ "%.0f"|format(nutrition.protein_cal / tdee * 100) }}%</td><td>{% if user.health_goal=='blood_sugar' %}ADA 0.8–1.0 g/kg{% elif user.health_goal=='weight_management' %}1.2 g/kg（保留肌肉）{% else %}1.0 g/kg（标准）{% endif %}</td></tr>
+        <tr><td>脂肪</td><td><strong>{{ nutrition.fat_g }} g</strong></td><td>{{ "%.0f"|format(nutrition.fat_cal / tdee * 100) }}%</td><td>{% if user.health_goal=='blood_sugar' %}ADA 30%{% elif user.health_goal=='weight_management' %}减脂偏低脂 25%{% else %}DASH 低脂 25%{% endif %}</td></tr>
+        <tr><td>碳水化合物</td><td><strong>{{ nutrition.carbs_g }} g</strong></td><td>{{ "%.0f"|format(nutrition.carbs_cal / tdee * 100) }}%</td><td>{% if user.health_goal=='blood_sugar' %}&le;50%（ADA 控糖）{% else %}剩余热量{% endif %}</td></tr>
+        <tr><td>膳食纤维</td><td><strong>{{ nutrition.fiber_g }} g</strong></td><td>&mdash;</td><td>中国 DRIs 2023{% if user.health_goal=='blood_sugar' %} + 控糖增量{% endif %}</td></tr>
+        <tr><td>水</td><td><strong>{{ "%.0f"|format(nutrition.water_ml / 1000) }} L</strong></td><td>&mdash;</td><td>{% if user.health_goal in ('blood_sugar','blood_pressure') %}35 ml/kg{% else %}30 ml/kg{% endif %}</td></tr>
+        {% if user.health_goal == 'blood_pressure' and nutrition.dash %}
+        <tr><td>钠</td><td><strong>&le;{{ nutrition.dash.sodium_mg }} mg</strong></td><td>&mdash;</td><td>WHO &le;2000 mg/d</td></tr>
+        <tr><td>钾</td><td><strong>{{ nutrition.dash.potassium_mg }} mg</strong></td><td>&mdash;</td><td>DASH 4700 mg/d</td></tr>
+        <tr><td>钙</td><td><strong>{{ nutrition.dash.calcium_mg }} mg</strong></td><td>&mdash;</td><td>DASH 1000 mg/d</td></tr>
+        <tr><td>镁</td><td><strong>{{ nutrition.dash.magnesium_mg }} mg</strong></td><td>&mdash;</td><td>DASH 420 mg/d（男）/ 320 mg/d（女）</td></tr>
+        {% endif %}
+    </table>
+</div>
+<div style="text-align:center;">
+    <button class="btn btn-secondary btn-sm" onclick="toggleDetail()" id="detailBtn">
+        <i data-lucide="chevron-down" class="icon-sm"></i> 展开详细参考表
+    </button>
+</div>
+
+<script>
+function toggleDetail(){
+    var d=document.getElementById('nutritionDetail');
+    var b=document.getElementById('detailBtn');
+    if(d.style.display==='none'){
+        d.style.display='block';
+        b.innerHTML='<i data-lucide=\"chevron-up\" class=\"icon-sm\"></i> 收起详细参考表';
+    }else{
+        d.style.display='none';
+        b.innerHTML='<i data-lucide=\"chevron-down\" class=\"icon-sm\"></i> 展开详细参考表';
+    }
+    lucide.createIcons();
+}
+</script><div class="card card-accent-blue">
+    <h2><i data-lucide="bar-chart-3" class="icon-md"></i>本周概览</h2>
+    <div class="stats" style="margin-bottom:0;">
+        <div class="stat-card green">
+            <div class="stat-icon"><i data-lucide="check-circle"></i></div>
+            <div class="stat-value">&mdash;</div>
+            <div class="stat-label">记录天数</div>
+        </div>
+        <div class="stat-card blue">
+            <div class="stat-icon"><i data-lucide="chart-no-axes-column"></i></div>
+            <div class="stat-value">&mdash;</div>
+            <div class="stat-label">日均热量</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-icon"><i data-lucide="flame"></i></div>
+            <div class="stat-value">&mdash;</div>
+            <div class="stat-label">连续打卡</div>
+        </div>
+    </div>
+    <p style="text-align:center;font-size:12px;color:var(--text3);margin-top:12px;">持续记录后，这里将展示你的饮食趋势分析</p>
+</div>
+{% endblock %}

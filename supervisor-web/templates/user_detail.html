@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}用户详情{% endblock %}
+{% block page_title %}用户与健康档案{% endblock %}
+{% block page_desc %}编辑账号资料、健康信息和账号状态{% endblock %}
+{% block content %}
+<div class="detail-head">
+    <div class="avatar large">{{ user.nickname[:1] }}</div>
+    <div><h2>{{ user.nickname }}</h2><p>{{ user.phone }} · {{ user.email or '未绑定邮箱' }}</p></div>
+    <span class="tag {{ 'enabled' if user.active else 'disabled' }}">{{ '账号已启用' if user.active else '账号已禁用' }}</span>
+    <a class="btn ghost" href="{{ url_for('users') }}">返回用户列表</a>
+</div>
+
+<section class="panel">
+    <div class="panel-head"><div><h2>账号与基础资料</h2><p>修改会直接同步到用户端账号</p></div></div>
+    <form class="profile-form" method="post" action="{{ url_for('edit_user', user_id=user.id) }}">
+        <div class="form-grid">
+            <label>昵称<input name="nickname" value="{{ user.nickname }}" required></label>
+            <label>手机号<input name="phone" value="{{ user.phone }}" required></label>
+            <label>邮箱<input type="email" name="email" value="{{ user.email or '' }}"></label>
+            <label>用户身份<select name="role"><option value="supervisor" {{ 'selected' if user.role == 'supervisor' }}>监督人</option><option value="supervisee" {{ 'selected' if user.role == 'supervisee' }}>被监督人</option></select></label>
+            <label>身高（cm）<input type="number" step="0.1" name="height" value="{{ user.height or '' }}"></label>
+            <label>体重（kg）<input type="number" step="0.1" name="weight" value="{{ user.weight or '' }}"></label>
+            <label>年龄<input type="number" name="age" value="{{ user.age or '' }}"></label>
+            <label>性别<select name="gender"><option value="">未设置</option><option value="male" {{ 'selected' if user.gender == 'male' }}>男</option><option value="female" {{ 'selected' if user.gender == 'female' }}>女</option></select></label>
+            <label>健康目标<select name="health_goal"><option value="weight_management" {{ 'selected' if user.health_goal == 'weight_management' }}>体重管理</option><option value="blood_sugar" {{ 'selected' if user.health_goal == 'blood_sugar' }}>血糖管理</option><option value="blood_pressure" {{ 'selected' if user.health_goal == 'blood_pressure' }}>血压管理</option></select></label>
+            <label>风险等级<select name="risk_level"><option value="low" {{ 'selected' if user.risk_level == 'low' }}>低风险</option><option value="medium" {{ 'selected' if user.risk_level == 'medium' }}>中风险</option><option value="high" {{ 'selected' if user.risk_level == 'high' }}>高风险</option></select></label>
+            <label>每日热量目标（kcal）<input type="number" step="1" name="daily_calorie_target" value="{{ user.daily_calorie_target or '' }}"></label>
+            <label>注册时间<input value="{{ user.created_at or '—' }}" disabled></label>
+        </div>
+        <div class="form-grid health-grid">
+            <label>既往病史<textarea name="medical_history" rows="4">{{ user.medical_history or '' }}</textarea></label>
+            <label>过敏信息<textarea name="allergies" rows="4">{{ user.allergies or '' }}</textarea></label>
+            <label>饮食偏好<textarea name="diet_preferences" rows="4">{{ user.diet_preferences or '' }}</textarea></label>
+            <label>忌口与限制<textarea name="dietary_restrictions" rows="4">{{ user.dietary_restrictions or '' }}</textarea></label>
+            <label>慢病信息<textarea name="chronic_conditions" rows="4">{{ user.chronic_conditions or '' }}</textarea></label>
+            <label>健康备注<textarea name="health_notes" rows="4">{{ user.health_notes or '' }}</textarea></label>
+        </div>
+        <button class="btn primary">保存用户与健康档案</button>
+    </form>
+</section>
+
+<div class="two-col">
+    <section class="panel">
+        <div class="panel-head"><div><h2>账号状态</h2><p>禁用后用户将不能继续登录或使用服务</p></div></div>
+        <form method="post" action="{{ url_for('toggle_user_status', user_id=user.id) }}" onsubmit="return confirm('确定{{ '禁用' if user.active else '启用' }}该账号吗？')">
+            <button class="btn {{ 'danger' if user.active else 'primary' }}">{{ '禁用账号' if user.active else '启用账号' }}</button>
+        </form>
+    </section>
+    <section class="panel">
+        <div class="panel-head"><div><h2>监督关系</h2><p>绑定码属于敏感信息</p></div></div>
+        {% if user.role == 'supervisor' %}<div class="code-box"><span>监督人绑定码</span><strong>{{ user.supervisor_code }}</strong></div><p class="muted">当前监督 {{ supervisees|length }} 人</p>{% else %}<div class="code-box"><span>被监督人绑定码</span><strong>{{ user.supervisee_code }}</strong></div><p class="muted">当前监督人：{{ user.supervisor_name or '未绑定' }}</p>{% endif %}
+        <div class="actions"><form method="post" action="{{ url_for('regenerate_code', user_id=user.id) }}" onsubmit="return confirm('重置后旧绑定码立即失效，确定继续吗？')"><button class="btn warning">重置绑定码</button></form>{% if user.bound_to %}<form method="post" action="{{ url_for('admin_unbind', user_id=user.id) }}" onsubmit="return confirm('确定解除监督关系吗？')"><button class="btn danger">解除绑定</button></form>{% endif %}</div>
+    </section>
+</div>
+
+{% if user.role == 'supervisor' %}<section class="panel"><div class="panel-head"><div><h2>被监督人</h2><p>当前绑定到该监督人的用户</p></div></div><div class="chip-list">{% for sub in supervisees %}<a href="{{ url_for('user_detail', user_id=sub.id) }}">{{ sub.nickname }}<small>{{ sub.phone }}</small></a>{% else %}<div class="empty">暂无被监督人</div>{% endfor %}</div></section>{% endif %}
+
+<section class="panel"><div class="panel-head"><div><h2>最近饮食记录</h2><p>最多显示 50 条</p></div></div><div class="table-wrap"><table><thead><tr><th>餐次</th><th>食物</th><th>克重</th><th>热量</th><th>摄入时间</th></tr></thead><tbody>{% for row in records %}<tr><td>{{ row.meal_type or '未分类' }}</td><td>{{ row.food_name }}</td><td>{{ row.weight_grams }} g</td><td>{{ row.calories }} kcal</td><td>{{ row.intake_time }}</td></tr>{% else %}<tr><td colspan="5" class="empty">暂无记录</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

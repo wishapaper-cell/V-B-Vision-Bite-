@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block body_class %}auth-page{% endblock %}
+{% block background %}{% endblock %}
+{% block title %}注册 - V&amp;B{% endblock %}
+{% block content %}
+<div class="card login-card">
+
+{% if step == "1" %}
+    <div class="brand-header">
+        <span class="brand-icon"><i data-lucide="smartphone"></i></span>
+        <h2>注册账号</h2>
+        <p>第 1 步：验证手机号</p>
+    </div>
+    {% if not verified %}
+    <form method="POST" id="phoneForm"><input type="hidden" name="step" value="1">
+        <div class="form-group"><label>手机号 <span class="required-mark">*</span></label><input type="tel" name="phone" id="phoneInput" placeholder="输入中国大陆 11 位手机号" value="{{ phone or '' }}" required maxlength="11" pattern="1[3-9][0-9]{9}" inputmode="numeric" autocomplete="tel"><p class="form-hint">须为 1 开头，第二位为 3–9 的 11 位手机号</p></div>
+        <button type="button" class="btn btn-primary btn-lg btn-block" onclick="sendCode()"><i data-lucide="send" class="icon-sm"></i> 发送验证码</button>
+    </form>
+    <div id="smsBanner" class="sms-banner" style="display:none;margin-top:18px;"></div>
+    <form method="POST" style="margin-top:16px;" id="codeForm"><input type="hidden" name="step" value="1"><input type="hidden" name="phone" id="codePhoneInput" value="{{ phone or '' }}">
+        <div class="form-group"><label>验证码 <span class="required-mark">*</span></label><input type="text" name="code" placeholder="输入 6 位验证码" required maxlength="6" style="letter-spacing:6px;font-size:20px;text-align:center;"></div>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">验证并继续 &rarr;</button>
+    </form>
+    {% endif %}
+
+{% elif step == "2" %}
+    <div class="brand-header">
+        <span class="brand-icon"><i data-lucide="user-plus"></i></span>
+        <h2>完善资料</h2>
+        <p>第 2 步：设置信息</p>
+    </div>
+    <form method="POST" enctype="multipart/form-data"><input type="hidden" name="step" value="2"><input type="hidden" name="phone" value="{{ phone }}">
+        <div class="form-group password-group"><label>密码 <span class="required-mark">*</span></label><input type="password" name="password" id="registerPassword" placeholder="设置密码" required minlength="8" autocomplete="new-password" aria-describedby="passwordRules passwordError"><div class="password-rules" id="passwordRules"><span data-rule="length">至少 8 位</span><span data-rule="upper">含大写字母</span><span data-rule="lower">含小写字母</span><span data-rule="digit">含数字</span></div><div class="field-error" id="passwordError" role="alert"></div></div>
+        <div class="form-group"><label>昵称 <span class="required-mark">*</span></label><input type="text" name="nickname" placeholder="你的昵称" required></div>
+        <div class="form-group"><label>邮箱 <span class="optional-mark">选填</span></label><input type="email" name="email" placeholder="your@email.com"></div>
+        <div class="form-group">
+            <label>头像 <span class="optional-mark">选填</span></label>
+            <div class="avatar-upload compact">
+                <div class="avatar-preview">
+                    <img id="registerAvatarPreview" src="" alt="头像预览" style="display:none;">
+                    <span id="registerAvatarFallback"><i data-lucide="user-round" style="width:28px;height:28px;"></i></span>
+                </div>
+                <div class="avatar-upload-info">
+                    <label for="registerAvatarInput" class="avatar-upload-button"><i data-lucide="image-plus" class="icon-sm"></i> 从本地选择</label>
+                    <input id="registerAvatarInput" type="file" name="avatar" accept="image/jpeg,image/png,image/webp,image/gif" hidden onchange="previewRegisterAvatar(this)">
+                    <p>支持 JPG、PNG、WebP、GIF，最大 5 MB</p>
+                </div>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>身高 (cm) <span class="required-mark">*</span></label><input type="number" name="height" placeholder="170" step="0.5" min="80" max="250" required inputmode="decimal"></div>
+            <div class="form-group"><label>体重 (kg) <span class="required-mark">*</span></label><input type="number" name="weight" placeholder="65" step="0.5" min="20" max="400" required inputmode="decimal"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>年龄 <span class="required-mark">*</span></label><input type="number" name="age" placeholder="30" min="6" max="120" required inputmode="numeric"></div>
+            <div class="form-group"><label>性别 <span class="required-mark">*</span></label><select name="gender" required><option value="">请选择</option><option value="male">男</option><option value="female">女</option></select></div>
+        </div>
+        <div class="form-group"><label>健康目标 <span class="required-mark">*</span></label><select name="health_goal" required onchange="updateGoalHint()" id="goalSelect">
+            <option value="">请选择</option>
+            <option value="weight_management">体重管理</option>
+            <option value="blood_sugar">血糖管理</option>
+            <option value="blood_pressure">血压管理</option>
+        </select><p id="goalHint" style="font-size:12px;color:var(--text2);margin-top:4px;"></p></div>
+        <button type="submit" class="btn btn-primary btn-lg btn-block"><i data-lucide="check" class="icon-sm"></i> 完成注册</button>
+    </form>
+{% endif %}
+
+    <p style="text-align:center;margin-top:20px;font-size:13px;color:var(--text2);">已有账号？<a href="/login" style="color:var(--green);font-weight:700;">去登录 &rarr;</a></p>
+</div>
+
+<script>
+function updateGoalHint(){
+    var h={weight_management:'系统根据 BMR 计算每日热量目标',blood_sugar:'系统重点监控碳水摄入',blood_pressure:'系统重点监控钠摄入'};
+    document.getElementById('goalHint').textContent=h[document.getElementById('goalSelect').value]||'';
+}
+function previewRegisterAvatar(input){
+    var file=input.files&&input.files[0];
+    if(!file)return;
+    if(file.size>5*1024*1024){alert('头像文件不能超过 5 MB');input.value='';return;}
+    var image=document.getElementById('registerAvatarPreview');
+    image.src=URL.createObjectURL(file);image.style.display='block';
+    document.getElementById('registerAvatarFallback').style.display='none';
+}
+function updatePasswordRules(){
+    var value=document.getElementById('registerPassword').value;
+    var checks={length:value.length>=8,upper:/[A-Z]/.test(value),lower:/[a-z]/.test(value),digit:/\d/.test(value)};
+    document.querySelectorAll('#passwordRules [data-rule]').forEach(function(item){item.classList.toggle('valid',!!checks[item.dataset.rule]);});
+    var error=document.getElementById('passwordError');
+    error.textContent=Object.values(checks).every(Boolean)?'':'密码需至少 8 位，并同时包含大小写字母和数字';
+    document.getElementById('registerPassword').classList.toggle('input-error',!!error.textContent);
+    return Object.values(checks).every(Boolean);
+}
+function saveRegisterDraft(){
+    var form=document.querySelector('form[enctype="multipart/form-data"]'); if(!form)return;
+    var draft={}; form.querySelectorAll('input,select').forEach(function(input){if(input.name&&input.type!=='file'&&input.type!=='password')draft[input.name]=input.value;});
+    sessionStorage.setItem('health-register-draft',JSON.stringify(draft));
+}
+function restoreRegisterDraft(){
+    try{var draft=JSON.parse(sessionStorage.getItem('health-register-draft')||'{}');var form=document.querySelector('form[enctype="multipart/form-data"]');if(!form)return;Object.keys(draft).forEach(function(name){var input=form.elements[name];if(input&& !input.value)input.value=draft[name];});updateGoalHint();}catch(error){}
+}
+async function sendCode(){
+    var p=document.getElementById('phoneInput').value.trim();
+    if(!/^1[3-9]\d{9}$/.test(p)){alert('请输入正确的中国大陆手机号');return;}
+    var r=await fetch('/send_code',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRF-Token':document.querySelector('meta[name="csrf-token"]').content},body:'phone='+encodeURIComponent(p)});
+    var d=await r.json();
+    if(d.ok){document.getElementById('smsBanner').style.display='block';document.getElementById('smsBanner').innerHTML='验证码已发送至 <strong>'+d.phone+'</strong>（模拟）<div class="code">'+d.code+'</div>';document.getElementById('codePhoneInput').value=d.phone;}else{alert(d.msg);}
+}
+</script>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+    var password=document.getElementById('registerPassword');
+    if(password){password.addEventListener('input',updatePasswordRules);var form=password.form;form.addEventListener('input',saveRegisterDraft);form.addEventListener('submit',function(event){saveRegisterDraft();if(!updatePasswordRules()){event.preventDefault();password.focus();}});restoreRegisterDraft();}
+});
+</script>
+{% endblock %}

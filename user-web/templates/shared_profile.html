@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ owner.nickname }}的共享资料 - V&amp;B{% endblock %}
+
+{% block hero %}
+<div class="hero-banner">
+    <span class="hero-icon"><i data-lucide="shield-check" style="width:40px;height:40px;"></i></span>
+    <div class="greeting">伙伴共享</div>
+    <h1>{{ owner.nickname }}的资料</h1>
+    <p class="subtitle">只展示对方当前授权给你的内容</p>
+</div>
+{% endblock %}
+
+{% block content %}
+{% set goal_labels = {'weight_management':'体重管理','blood_sugar':'血糖管理','blood_pressure':'血压管理'} %}
+<div class="shared-permission-strip">
+    <span class="{{ 'allowed' if allow_diet else '' }}"><i data-lucide="utensils" class="icon-sm"></i>饮食</span>
+    <span class="{{ 'allowed' if allow_goal else '' }}"><i data-lucide="target" class="icon-sm"></i>目标</span>
+    <span class="{{ 'allowed' if allow_profile else '' }}"><i data-lucide="activity" class="icon-sm"></i>身体资料</span>
+</div>
+
+{% if allow_goal %}
+<div class="card card-accent-top">
+    <h2><i data-lucide="target" class="icon-md"></i>健康目标</h2>
+    <div class="stats" style="margin-bottom:0;">
+        <div class="stat-card green"><div class="stat-icon"><i data-lucide="compass"></i></div><div class="stat-value shared-value">{{ goal_labels[owner.health_goal] }}</div><div class="stat-label">当前管理模式</div></div>
+        <div class="stat-card orange"><div class="stat-icon"><i data-lucide="flame"></i></div><div class="stat-value">{{ "%.0f"|format(today_calories) }}</div><div class="stat-label">今日摄入 kcal</div></div>
+    </div>
+</div>
+{% endif %}
+
+{% if allow_profile %}
+<div class="card card-accent-blue">
+    <h2><i data-lucide="activity" class="icon-md"></i>身体资料</h2>
+    <div class="stats" style="margin-bottom:0;">
+        <div class="stat-card green"><div class="stat-value">{{ owner.height or '—' }}</div><div class="stat-label">身高 cm</div></div>
+        <div class="stat-card blue"><div class="stat-value">{{ owner.weight or '—' }}</div><div class="stat-label">体重 kg</div></div>
+        <div class="stat-card orange"><div class="stat-value">{{ owner.age or '—' }}</div><div class="stat-label">年龄</div></div>
+        <div class="stat-card purple"><div class="stat-value">{{ '男' if owner.gender=='male' else ('女' if owner.gender=='female' else '—') }}</div><div class="stat-label">性别</div></div>
+    </div>
+</div>
+{% endif %}
+
+{% if allow_diet %}
+<a href="/diet?user_id={{ owner.id }}" class="shared-diet-link">
+    <span><i data-lucide="utensils-crossed"></i></span>
+    <div><strong>查看饮食记录</strong><small>浏览对方授权分享的饮食时间线</small></div>
+    <i data-lucide="chevron-right"></i>
+</a>
+{% endif %}
+
+<div class="page-back"><a href="/profile" class="btn btn-secondary btn-sm">返回个人主页</a></div>
+{% endblock %}

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Soft glass V and B monogram with centre glow</title>
+  <desc id="desc">A light emerald V and B monogram with pale mint edging, a fine luminous centre line and a soft diffused shadow.</desc>
+  <defs>
+    <linearGradient id="bg" x1="100" y1="40" x2="920" y2="980" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f7fffc"/>
+      <stop offset="1" stop-color="#d2f4e8"/>
+    </linearGradient>
+    <linearGradient id="ribbon" x1="245" y1="230" x2="850" y2="810" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#278e6c"/>
+      <stop offset="1" stop-color="#4cbf9a"/>
+    </linearGradient>
+    <radialGradient id="bubble" cx="0" cy="0" r="1" gradientTransform="translate(405 345) rotate(48) scale(470)">
+      <stop stop-color="#fff" stop-opacity=".78"/>
+      <stop offset="1" stop-color="#c5f1e2" stop-opacity=".28"/>
+    </radialGradient>
+    <filter id="shadow" x="-35%" y="-35%" width="170%" height="180%">
+      <feDropShadow dx="0" dy="12" stdDeviation="22" flood-color="#17694f" flood-opacity=".15"/>
+    </filter>
+    <filter id="lineGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <circle cx="512" cy="500" r="362" fill="url(#bubble)" stroke="#fff" stroke-opacity=".76" stroke-width="6"/>
+  <g fill="none" stroke="#cff6e9" stroke-opacity=".82" stroke-width="90" stroke-linejoin="round">
+    <path d="M212.5 290L450 740L592.5 282.5" stroke-linecap="round"/>
+    <path d="M615 250V772.5M615 250A185 132.5 0 0 1 615 515M615 515A212.5 135 0 0 1 615 785" stroke-linecap="butt"/>
+  </g>
+  <circle cx="615" cy="772.5" r="45" fill="#cff6e9" fill-opacity=".82"/>
+  <path d="M212.5 290L450 740L592.5 282.5" fill="none" stroke="url(#ribbon)" stroke-width="78" stroke-linecap="round" stroke-linejoin="round" filter="url(#shadow)"/>
+  <path d="M615 250V772.5M615 250A185 132.5 0 0 1 615 515M615 515A212.5 135 0 0 1 615 785" fill="none" stroke="url(#ribbon)" stroke-width="78" stroke-linecap="butt" stroke-linejoin="round" filter="url(#shadow)"/>
+  <circle cx="615" cy="772.5" r="39" fill="url(#ribbon)" filter="url(#shadow)"/>
+  <g fill="none" stroke="#effff9" stroke-opacity=".4" stroke-width="15" stroke-linejoin="round" filter="url(#lineGlow)">
+    <path d="M212.5 290L450 740L592.5 282.5" stroke-linecap="round"/>
+    <path d="M615 250V772.5M615 250A185 132.5 0 0 1 615 515M615 515A212.5 135 0 0 1 615 785" stroke-linecap="butt"/>
+  </g>
+  <g fill="none" stroke="#f4fffb" stroke-opacity=".62" stroke-width="5" stroke-linejoin="round">
+    <path d="M212.5 290L450 740L592.5 282.5" stroke-linecap="round"/>
+    <path d="M615 250V772.5M615 250A185 132.5 0 0 1 615 515M615 515A212.5 135 0 0 1 615 785" stroke-linecap="butt"/>
+  </g>
+  <circle cx="798" cy="170" r="13" fill="#fff" fill-opacity=".58" stroke="#42b58f" stroke-opacity=".4" stroke-width="2"/>
+  <circle cx="840" cy="210" r="9" fill="#fff" fill-opacity=".5"/>
+</svg>

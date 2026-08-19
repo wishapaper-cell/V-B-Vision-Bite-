@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% block title %}管理端{% endblock %} · 健康饮食</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin-extra.css') }}">
+</head>
+<body class="{{ 'auth-body' if not admin else '' }}">
+{% if admin %}
+<aside class="sidebar">
+    <a class="brand" href="{{ url_for('dashboard') }}"><span>食</span><div>健康饮食<small>管理端</small></div></a>
+    <nav>
+        <a class="{{ 'active' if request.endpoint == 'dashboard' }}" href="{{ url_for('dashboard') }}">数据总览</a>
+        <a class="{{ 'active' if request.endpoint in ('users', 'user_detail') }}" href="{{ url_for('users') }}">用户管理</a>
+        <a class="{{ 'active' if request.endpoint == 'bindings' }}" href="{{ url_for('bindings') }}">监督关系</a>
+        <a class="{{ 'active' if request.endpoint in ('diets', 'user_diets', 'diet_detail', 'delete_diet') }}" href="{{ url_for('diets') }}">饮食记录</a>
+        <a class="{{ 'active' if request.endpoint == 'foods' }}" href="{{ url_for('foods') }}">食物库</a>
+        <a class="{{ 'active' if request.endpoint in ('recipes', 'toggle_recipe_status', 'delete_recipe') }}" href="{{ url_for('recipes') }}">菜谱管理</a>
+        <a class="{{ 'active' if request.endpoint == 'audit_page' }}" href="{{ url_for('audit_page') }}">操作日志</a>
+        <a class="{{ 'active' if request.endpoint in ('feedback', 'update_feedback') }}" href="{{ url_for('feedback') }}">反馈咨询</a>
+        <a class="{{ 'active' if request.endpoint in ('system_page', 'create_backup') }}" href="{{ url_for('system_page') }}">系统运维</a>
+        {% if admin.role == 'super_admin' %}<a class="{{ 'active' if request.endpoint in ('admin_accounts', 'approve_admin', 'reject_admin', 'toggle_admin_status', 'revoke_admin_invitation') }}" href="{{ url_for('admin_accounts') }}">管理员账号</a>{% endif %}
+    </nav>
+    <div class="sidebar-foot">
+        <div><strong>{{ admin.display_name }}</strong><small>{{ admin.username }} · {{ '超级管理员' if admin.role == 'super_admin' else '普通管理员' }}</small></div>
+        <form method="post" action="{{ url_for('logout') }}"><button class="link-button">退出登录</button></form>
+    </div>
+</aside>
+<main class="main">
+    <header class="topbar"><div><h1>{% block page_title %}管理端{% endblock %}</h1><p>{% block page_desc %}集中管理用户端数据{% endblock %}</p></div><div class="db-pill">用户数据库已连接</div></header>
+{% else %}
+<main class="auth-main">
+{% endif %}
+    <section class="content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </section>
+</main>
+<script>
+document.querySelectorAll('form[method="post"],form[method="POST"]').forEach(function(form) {
+    if (!form.querySelector('[name="csrf_token"]')) {
+        var input = document.createElement('input');
+        input.type = 'hidden'; input.name = 'csrf_token'; input.value = '{{ csrf_token }}';
+        form.appendChild(input);
+    }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block body_class %}auth-page{% endblock %}
+{% block background %}{% endblock %}
+{% block title %}设置目标 - V&amp;B{% endblock %}
+{% block content %}
+<div class="card login-card">
+    <div class="brand-header"><span class="brand-icon"><i data-lucide="target"></i></span><h2>首次设置</h2><p>填写身体指标，自动计算每日热量目标</p></div>
+    <form method="POST" action="/goal/setup">
+        <div class="form-row"><div class="form-group"><label>身高 (cm)</label><input type="number" name="height" placeholder="170" step="0.5" min="80" max="250" required></div><div class="form-group"><label>体重 (kg)</label><input type="number" name="weight" placeholder="65" step="0.5" min="20" max="400" required></div></div>
+        <div class="form-row"><div class="form-group"><label>年龄</label><input type="number" name="age" placeholder="30" min="6" max="120" required></div><div class="form-group"><label>性别</label><select name="gender" required><option value="">选择</option><option value="male">男</option><option value="female">女</option></select></div></div>
+        <div class="form-group"><label>健康目标</label><select name="health_goal" required><option value="weight_management">体重管理</option><option value="blood_sugar">血糖管理</option><option value="blood_pressure">血压管理</option></select></div>
+        <button type="submit" class="btn btn-primary btn-lg btn-block"><i data-lucide="check" class="icon-sm"></i> 确认并计算</button>
+    </form>
+</div>
+{% endblock %}

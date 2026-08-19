@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}登录{% endblock %}
+{% block content %}
+<div class="auth-card">
+    <div class="auth-logo">食</div>
+    <h1>管理端登录</h1>
+    <p>健康饮食用户与数据管理中心</p>
+    <form method="post">
+        <label>管理员账号<input name="username" required autocomplete="username" autofocus></label>
+        <label>密码<input type="password" name="password" required autocomplete="current-password"></label>
+        <button class="btn primary full">安全登录</button>
+    </form>
+    <div class="auth-note">连续失败 5 次后将暂停登录 15 分钟</div>
+    <a class="invite-register-link" href="{{ url_for('register_admin') }}">受邀管理员注册</a>
+</div>
+{% endblock %}

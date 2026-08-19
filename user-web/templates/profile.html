@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block title %}个人主页 - V&amp;B{% endblock %}
+
+{% block hero %}{% endblock %}
+
+{% block content %}
+
+{% set goal_labels = {'weight_management': '体重管理', 'blood_sugar': '血糖管理', 'blood_pressure': '血压管理'} %}
+{% set goal_descs = {
+    'weight_management': '每日热量预算 + 宏量营养素追踪',
+    'blood_sugar': '碳水摄入监控 + 低 GI 饮食建议',
+    'blood_pressure': '钠摄入控制 + 血压友好饮食'
+} %}
+
+<div class="cover-area">
+    {% if user.avatar_url %}
+    <img src="{{ user.avatar_url }}" class="cover-avatar" style="object-fit:cover;" onerror="this.style.display='none'">
+    {% else %}
+    <div class="cover-avatar">{{ user.nickname[0] }}</div>
+    {% endif %}
+    <div class="cover-name">{{ user.nickname }}</div>
+    <div class="cover-role">
+        <i data-lucide="user" style="width:14px;height:14px;vertical-align:middle;margin-right:2px;"></i>个人用户
+        &nbsp;·&nbsp; {{ goal_labels[user.health_goal] }}
+    </div>
+    <div class="cover-phone">{{ user.phone[:3] }}****{{ user.phone[-4:] }}</div>
+</div>
+
+{% set fields_total = 4 %}
+{% set fields_filled = (1 if user.height else 0) + (1 if user.weight else 0) + (1 if user.age else 0) + (1 if user.gender else 0) %}
+{% set completion_pct = (fields_filled / fields_total * 100)|int %}
+<div class="completion-bar">
+    <span><i data-lucide="clipboard-list" style="width:18px;height:18px;color:#E65100;"></i></span>
+    <div style="flex:1;">
+        <div style="font-size:12px;font-weight:600;color:#E65100;margin-bottom:4px;">资料完成度 {{ completion_pct }}%</div>
+        <div class="bar-wrap"><div class="bar-fill" style="width:{{ completion_pct }}%;"></div></div>
+    </div>
+    {% if completion_pct < 100 %}
+    <button class="btn btn-sm {{ 'btn-primary' if completion_pct < 75 else 'btn-secondary' }}" onclick="openModal('editModal')"><i data-lucide="pencil" class="icon-sm"></i>完善</button>
+    {% else %}
+    <span><i data-lucide="check-circle" style="color:var(--green);"></i></span>
+    {% endif %}
+</div>
+
+<div class="card card-accent-top">
+    <h2><i data-lucide="activity" class="icon-md"></i>身体指标</h2>
+    <div class="stats" style="margin-bottom:0;">
+        <div class="stat-card green">
+            <div class="stat-icon"><i data-lucide="ruler"></i></div>
+            <div class="stat-value">{{ user.height or '—' }}</div>
+            <div class="stat-label">身高 cm</div>
+        </div>
+        <div class="stat-card blue">
+            <div class="stat-icon"><i data-lucide="weight"></i></div>
+            <div class="stat-value">{{ user.weight or '—' }}</div>
+            <div class="stat-label">体重 kg</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-icon"><i data-lucide="calendar-days"></i></div>
+            <div class="stat-value">{{ user.age or '—' }}</div>
+            <div class="stat-label">年龄</div>
+        </div>
+        <div class="stat-card purple">
+            <div class="stat-icon"><i data-lucide="venus-and-mars"></i></div>
+            <div class="stat-value">{{ '男' if user.gender=='male' else ('女' if user.gender=='female' else '—') }}</div>
+            <div class="stat-label">性别</div>
+        </div>
+    </div>
+</div>
+
+<div class="card card-accent-blue">
+    <h2><i data-lucide="trending-up" class="icon-md"></i>使用统计</h2>
+    <div class="stats" style="margin-bottom:0;grid-template-columns:repeat(auto-fit, minmax(100px, 1fr));">
+        <div class="stat-card green">
+            <div class="stat-icon"><i data-lucide="pen-line"></i></div>
+            <div class="stat-value">{{ total_records }}</div>
+            <div class="stat-label">总记录数</div>
+        </div>
+        <div class="stat-card blue">
+            <div class="stat-icon"><i data-lucide="calendar-check"></i></div>
+            <div class="stat-value">{{ total_days }}</div>
+            <div class="stat-label">记录天数</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-icon"><i data-lucide="target"></i></div>
+            <div class="stat-value" style="font-size:13px;">{{ goal_labels[user.health_goal] }}</div>
+            <div class="stat-label">当前模式</div>
+        </div>
+    </div>
+</div>
+
+<div class="card card-accent-purple sharing-card">
+    <div class="section-heading-row">
+        <h2><i data-lucide="users-round" class="icon-md"></i>共享伙伴</h2>
+        <a href="/bind" class="btn btn-primary btn-sm"><i data-lucide="user-plus" class="icon-sm"></i>添加伙伴</a>
+    </div>
+    <div class="share-code-panel">
+        <div>
+            <p class="share-eyebrow">我的分享码</p>
+            <div class="code-display">{{ user.share_code }}</div>
+            <button class="btn btn-outline btn-sm" type="button" onclick="copyCode('{{ user.share_code }}')"><i data-lucide="copy" class="icon-sm"></i>复制</button>
+        </div>
+        {% if QR_AVAILABLE %}<img src="/qrcode/{{ user.share_code }}" class="share-qr" alt="我的分享二维码">{% endif %}
+    </div>
+
+    {% if pending_received %}
+    <h3 class="subsection-title"><i data-lucide="inbox" class="icon-sm"></i>待你确认（{{ pending_received|length }}）</h3>
+    {% for connection in pending_received %}
+    <div class="connection-panel pending">
+        <div class="connection-person"><strong>{{ connection.other_nickname }}</strong><span>申请与你共享健康数据</span></div>
+        <form method="POST" action="/connections/{{ connection.id }}/respond" class="permission-form">
+            <input type="text" name="remark" maxlength="40" placeholder="给对方的备注（选填）">
+            <div class="permission-inline">
+                <label><input type="checkbox" name="share_diet" value="1" checked>饮食</label>
+                <label><input type="checkbox" name="share_goal" value="1">目标</label>
+                <label><input type="checkbox" name="share_profile" value="1">身体资料</label>
+            </div>
+            <div class="connection-actions">
+                <button class="btn btn-primary btn-sm" name="action" value="accept"><i data-lucide="check" class="icon-sm"></i>接受</button>
+                <button class="btn btn-secondary btn-sm" name="action" value="reject">拒绝</button>
+            </div>
+        </form>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if pending_sent %}
+    <h3 class="subsection-title"><i data-lucide="send" class="icon-sm"></i>等待对方确认</h3>
+    {% for connection in pending_sent %}
+    <div class="connection-panel compact"><strong>{{ connection.my_remark or connection.other_nickname }}</strong><span class="status-pill">待确认</span>
+        <form method="POST" action="/connections/{{ connection.id }}/unbind"><button class="btn btn-secondary btn-sm">撤回</button></form>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if connections %}
+    <h3 class="subsection-title"><i data-lucide="link-2" class="icon-sm"></i>已绑定（{{ connections|length }}）</h3>
+    <div class="connection-list">
+    {% for connection in connections %}
+        <details class="connection-panel">
+            <summary>
+                <span class="connection-avatar">{{ (connection.my_remark or connection.other_nickname)[0] }}</span>
+                <span class="connection-person"><strong>{{ connection.my_remark or connection.other_nickname }}</strong><small>{{ connection.other_phone[:3] }}****{{ connection.other_phone[-4:] }}</small></span>
+                <span class="shared-access">
+                    {% if connection.other_share_diet %}<a href="/diet?user_id={{ connection.other_id }}">饮食</a>{% endif %}
+                    {% if connection.other_share_goal or connection.other_share_profile %}<a href="/shared/{{ connection.other_id }}">资料</a>{% endif %}
+                </span>
+                <i data-lucide="chevron-down" class="icon-sm"></i>
+            </summary>
+            <form method="POST" action="/connections/{{ connection.id }}/settings" class="permission-form">
+                <div class="form-group"><label>我对TA的备注</label><input type="text" name="remark" maxlength="40" value="{{ connection.my_remark }}" placeholder="例如：妈妈"></div>
+                <p class="form-hint">我允许对方查看：</p>
+                <div class="permission-inline">
+                    <label><input type="checkbox" name="share_diet" value="1" {{ 'checked' if connection.my_share_diet }}>饮食</label>
+                    <label><input type="checkbox" name="share_goal" value="1" {{ 'checked' if connection.my_share_goal }}>目标</label>
+                    <label><input type="checkbox" name="share_profile" value="1" {{ 'checked' if connection.my_share_profile }}>身体资料</label>
+                </div>
+                <div class="connection-actions">
+                    <button class="btn btn-primary btn-sm"><i data-lucide="save" class="icon-sm"></i>保存设置</button>
+                </div>
+            </form>
+            <form method="POST" action="/connections/{{ connection.id }}/unbind" onsubmit="return confirm('解除后双方将立即无法继续查看共享数据，确定解除吗？');" class="danger-zone-inline">
+                <button class="btn btn-danger btn-sm">解除绑定</button>
+            </form>
+        </details>
+    {% endfor %}
+    </div>
+    {% elif not pending_received and not pending_sent %}
+    <div class="empty compact-empty"><i data-lucide="users-round"></i><p>还没有共享伙伴</p><a href="/bind">添加第一位伙伴</a></div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2><i data-lucide="refresh-cw" class="icon-md"></i>切换健康管理模式</h2>
+    <p style="color:var(--text2);font-size:12px;margin-bottom:14px;">{{ goal_descs[user.health_goal] }}</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <form method="POST" action="/profile/switch-mode" style="display:inline;">
+            <input type="hidden" name="health_goal" value="weight_management">
+            <button class="btn {{ 'btn-primary' if user.health_goal=='weight_management' else 'btn-secondary' }}" style="min-width:130px;">
+                <i data-lucide="scale" class="icon-sm"></i> 体重管理
+            </button>
+        </form>
+        <form method="POST" action="/profile/switch-mode" style="display:inline;">
+            <input type="hidden" name="health_goal" value="blood_sugar">
+            <button class="btn {{ 'btn-primary' if user.health_goal=='blood_sugar' else 'btn-secondary' }}" style="min-width:130px;">
+                <i data-lucide="droplets" class="icon-sm"></i> 血糖管理
+            </button>
+        </form>
+        <form method="POST" action="/profile/switch-mode" style="display:inline;">
+            <input type="hidden" name="health_goal" value="blood_pressure">
+            <button class="btn {{ 'btn-primary' if user.health_goal=='blood_pressure' else 'btn-secondary' }}" style="min-width:130px;">
+                <i data-lucide="heart-pulse" class="icon-sm"></i> 血压管理
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <h2><i data-lucide="settings" class="icon-md"></i>设置与工具</h2>
+    <div class="settings-grid">
+        <a class="setting-card" onclick="openModal('editModal')" style="cursor:pointer;">
+            <div class="set-icon" style="background:var(--green-lighter);"><i data-lucide="pencil"></i></div>
+            <div class="set-info"><div class="set-title">编辑资料</div><div class="set-desc">修改个人信息和指标</div></div>
+            <span class="set-arrow"><i data-lucide="chevron-right" style="width:18px;height:18px;"></i></span>
+        </a>
+        <a class="setting-card" onclick="openModal('pwdModal')" style="cursor:pointer;">
+            <div class="set-icon" style="background:var(--blue-light);"><i data-lucide="lock"></i></div>
+            <div class="set-info"><div class="set-title">修改密码</div><div class="set-desc">更新账户安全设置</div></div>
+            <span class="set-arrow"><i data-lucide="chevron-right" style="width:18px;height:18px;"></i></span>
+        </a>
+        <a href="/bind" class="setting-card">
+            <div class="set-icon" style="background:var(--orange-light);"><i data-lucide="scan-line"></i></div>
+            <div class="set-info"><div class="set-title">扫一扫</div><div class="set-desc">扫码绑定对方</div></div>
+            <span class="set-arrow"><i data-lucide="chevron-right" style="width:18px;height:18px;"></i></span>
+        </a>
+        <a href="/help" class="setting-card">
+            <div class="set-icon" style="background:var(--purple-light);"><i data-lucide="help-circle"></i></div>
+            <div class="set-info"><div class="set-title">帮助中心</div><div class="set-desc">使用指南与 FAQ</div></div>
+            <span class="set-arrow"><i data-lucide="chevron-right" style="width:18px;height:18px;"></i></span>
+        </a>
+    </div>
+</div>
+
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <h2 style="font-size:20px;margin-bottom:20px;"><i data-lucide="pencil" class="icon-md"></i> 编辑资料</h2>
+        <form method="POST" action="/profile/edit" enctype="multipart/form-data">
+            <div class="form-group"><label>昵称</label><input type="text" name="nickname" value="{{ user.nickname }}" required></div>
+            <div class="form-group">
+                <label>头像</label>
+                <div class="avatar-upload">
+                    <div class="avatar-preview">
+                        {% if user.avatar_url %}
+                        <img id="profileAvatarPreview" src="{{ user.avatar_url }}" alt="头像预览">
+                        <span id="profileAvatarFallback" style="display:none;">{{ user.nickname[0] }}</span>
+                        {% else %}
+                        <img id="profileAvatarPreview" src="" alt="头像预览" style="display:none;">
+                        <span id="profileAvatarFallback">{{ user.nickname[0] }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="avatar-upload-info">
+                        <label for="profileAvatarInput" class="avatar-upload-button"><i data-lucide="image-plus" class="icon-sm"></i> 选择图片</label>
+                        <input id="profileAvatarInput" type="file" name="avatar" accept="image/jpeg,image/png,image/webp,image/gif" hidden onchange="previewAvatar(this,'profileAvatarPreview','profileAvatarFallback')">
+                        <p>支持 JPG、PNG、WebP、GIF，最大 5 MB</p>
+                        {% if user.avatar_url %}
+                        <label class="avatar-remove"><input type="checkbox" name="remove_avatar" value="1"> 移除当前头像</label>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="form-row"><div class="form-group"><label>身高 (cm)</label><input type="number" name="height" value="{{ user.height or '' }}" step="0.5" min="80" max="250"></div><div class="form-group"><label>体重 (kg)</label><input type="number" name="weight" value="{{ user.weight or '' }}" step="0.5" min="20" max="400"></div></div>
+            <div class="form-row"><div class="form-group"><label>年龄</label><input type="number" name="age" value="{{ user.age or '' }}" min="6" max="120"></div><div class="form-group"><label>性别</label><select name="gender"><option value="">不变</option><option value="male" {{ 'selected' if user.gender=='male' }}>男</option><option value="female" {{ 'selected' if user.gender=='female' }}>女</option></select></div></div>
+            <div class="form-group"><label>健康目标</label><select name="health_goal"><option value="weight_management" {{ 'selected' if user.health_goal=='weight_management' }}>体重管理</option><option value="blood_sugar" {{ 'selected' if user.health_goal=='blood_sugar' }}>血糖管理</option><option value="blood_pressure" {{ 'selected' if user.health_goal=='blood_pressure' }}>血压管理</option></select></div>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button type="submit" class="btn btn-primary" style="flex:1;"><i data-lucide="save" class="icon-sm"></i> 保存</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')" style="flex:1;">取消</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay" id="pwdModal">
+    <div class="modal">
+        <h2 style="font-size:20px;margin-bottom:20px;"><i data-lucide="lock" class="icon-md"></i> 修改密码</h2>
+        <form method="POST" action="/profile/change-password">
+            <div class="form-group"><label>原密码</label><input type="password" name="old_password" required></div>
+            <div class="form-group"><label>新密码 <span class="form-hint">（&ge;8位，含大小写字母+数字）</span></label><input type="password" name="new_password" required minlength="8"></div>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button type="submit" class="btn btn-primary" style="flex:1;"><i data-lucide="check" class="icon-sm"></i> 确认修改</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('pwdModal')" style="flex:1;">取消</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openModal(id){document.getElementById(id).classList.add('show');lucide.createIcons();}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function previewAvatar(input, imageId, fallbackId) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+        alert('头像文件不能超过 5 MB'); input.value = ''; return;
+    }
+    var image = document.getElementById(imageId);
+    var fallback = document.getElementById(fallbackId);
+    image.src = URL.createObjectURL(file);
+    image.style.display = 'block';
+    if (fallback) fallback.style.display = 'none';
+}
+window.onclick=function(e){if(e.target.classList.contains('modal-overlay'))e.target.classList.remove('show');}
+function copyCode(code) {
+    if (navigator.clipboard) { navigator.clipboard.writeText(code).then(function(){ alert('已复制：'+code); }); }
+    else { var ta=document.createElement('textarea');ta.value=code;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);alert('已复制：'+code); }
+}
+</script>
+{% endblock %}

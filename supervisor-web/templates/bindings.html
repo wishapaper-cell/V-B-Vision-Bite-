@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}监督关系{% endblock %}
+{% block page_title %}监督关系{% endblock %}
+{% block page_desc %}查看并处理用户间的监督绑定{% endblock %}
+{% block content %}
+<section class="panel">
+    <div class="panel-head"><div><h2>全部被监督人</h2><p>未绑定用户优先显示</p></div></div>
+    <div class="table-wrap"><table><thead><tr><th>被监督人</th><th>手机号</th><th>绑定码</th><th>当前监督人</th><th>监督人手机号</th><th>操作</th></tr></thead><tbody>{% for row in bindings %}<tr><td><a class="text-link" href="{{ url_for('user_detail', user_id=row.id) }}">{{ row.nickname }}</a></td><td>{{ row.phone }}</td><td><code>{{ row.supervisee_code }}</code></td><td>{{ row.supervisor_name or '未绑定' }}</td><td>{{ row.supervisor_phone or '—' }}</td><td>{% if row.bound_to %}<form method="post" action="{{ url_for('admin_unbind', user_id=row.id) }}" onsubmit="return confirm('确定解除该监督关系吗？')"><button class="link-button danger-text">解除</button></form>{% else %}<span class="muted">—</span>{% endif %}</td></tr>{% else %}<tr><td colspan="6" class="empty">暂无被监督人</td></tr>{% endfor %}</tbody></table></div>
+</section>
+{% endblock %}

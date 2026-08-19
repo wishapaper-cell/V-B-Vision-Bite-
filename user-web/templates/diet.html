@@ -1,0 +1,515 @@
+{% extends "base.html" %}
+{% block title %}饮食记录 - V&amp;B{% endblock %}
+
+{% macro record_item(record, tab_name) %}
+<article class="diet-record-card">
+    {% if record.image_url %}
+    <img class="diet-record-thumb" src="{{ record.image_url }}" alt="{{ record.food_name }}的记录图片">
+    {% else %}
+    <span class="diet-record-placeholder"><i data-lucide="utensils"></i></span>
+    {% endif %}
+    <div class="record-main">
+        <div class="record-title-row">
+            <strong>{{ record.food_name }}</strong>
+            <span class="source-badge {{ record.source_type or 'manual' }}">
+                {% if record.source_type == 'glasses' %}眼镜识别
+                {% elif record.source_type == 'image_recognition' %}图片识别
+                {% else %}手动录入{% endif %}
+            </span>
+        </div>
+        <div class="record-meta">
+            {{ "%.0f"|format(record.weight_grams) }}g · <strong>{{ "%.1f"|format(record.calories) }} kcal</strong>
+            · {{ record.intake_time[11:16] if record.intake_time and record.intake_time|length >= 16 else '' }}
+        </div>
+        {% if record.corrected_at %}
+        <div class="corrected-note"><i data-lucide="badge-check" class="icon-xs"></i> 已修正识别结果</div>
+        {% endif %}
+    </div>
+    {% if record.user_id == user.id %}
+    <div class="record-actions">
+        <a class="btn btn-secondary btn-sm" href="/diet?tab={{ tab_name }}&correct={{ record.id }}#correctionPanel">
+            <i data-lucide="pencil-line" class="icon-sm"></i><span>修正</span>
+        </a>
+        <form method="POST" action="/diet/delete/{{ record.id }}" onsubmit="return confirm('确定删除这条记录吗？')">
+            <input type="hidden" name="return_tab" value="{{ tab_name }}">
+            <button class="btn btn-danger btn-sm" title="删除记录"><i data-lucide="trash-2" class="icon-sm"></i></button>
+        </form>
+    </div>
+    {% endif %}
+</article>
+{% endmacro %}
+
+{% block hero %}
+<div class="hero-banner diet-hero">
+    <span class="hero-icon"><i data-lucide="utensils-crossed" style="width:40px;height:40px;"></i></span>
+    <div class="greeting">{{ '我的饮食' if viewed_user.id == user.id else ((viewed_user.nickname or '好友') + '的饮食') }}</div>
+    <h1>{{ '今天吃得怎么样？' if viewed_user.id == user.id else '共享饮食记录' }}</h1>
+    <p class="subtitle">{{ '记录、识别和修正都在同一个看板完成' if viewed_user.id == user.id else '仅查看对方已授权分享的内容' }}</p>
+</div>
+{% endblock %}
+
+{% block content %}
+{% set today_cal = namespace(v=0) %}
+{% for record in today_records %}{% set today_cal.v = today_cal.v + record.calories %}{% endfor %}
+
+<div class="viewer-switch" aria-label="饮食记录用户切换">
+    <a href="/diet" class="viewer-chip {{ 'active' if viewed_user.id == user.id }}">
+        <i data-lucide="user-round" class="icon-sm"></i> 我的饮食
+    </a>
+    {% for connection in connections %}
+        {% if connection.other_share_diet %}
+        <a href="/diet?user_id={{ connection.other_id }}" class="viewer-chip {{ 'active' if viewed_user.id == connection.other_id }}">
+            <i data-lucide="users-round" class="icon-sm"></i> {{ connection.my_remark or connection.other_nickname }}
+        </a>
+        {% endif %}
+    {% endfor %}
+</div>
+
+<div class="diet-summary-bar">
+    <div><span>今日记录</span><strong>{{ today_records|length }} 餐</strong></div>
+    <div><span>今日摄入</span><strong>{{ "%.0f"|format(today_cal.v) }} kcal</strong></div>
+    {% if viewed_user.id == user.id %}
+    <a href="/recognition" class="btn btn-primary btn-sm"><i data-lucide="scan-eye" class="icon-sm"></i>识别食物</a>
+    {% endif %}
+</div>
+
+<nav class="tabs diet-tabs" aria-label="饮食记录分类">
+    <a class="tab {{ 'active' if active_tab == 'today' }}" href="/diet{% if viewed_user.id != user.id %}?user_id={{ viewed_user.id }}{% else %}?tab=today{% endif %}">
+        <i data-lucide="sun" class="icon-sm"></i>今日记录
+    </a>
+    <a class="tab {{ 'active' if active_tab == 'history' }}" href="/diet?{% if viewed_user.id != user.id %}user_id={{ viewed_user.id }}&{% endif %}tab=history">
+        <i data-lucide="history" class="icon-sm"></i>历史记录
+    </a>
+</nav>
+
+{% if correction_record %}
+<section class="card correction-panel" id="correctionPanel">
+    <div class="section-heading-row">
+        <div>
+            <span class="section-kicker">修正识别结果</span>
+            <h2><i data-lucide="pencil-line" class="icon-md"></i>{{ correction_record.food_name }}</h2>
+        </div>
+        <a class="btn btn-ghost btn-sm" href="/diet?tab={{ active_tab }}"><i data-lucide="x" class="icon-sm"></i>关闭</a>
+    </div>
+    <div class="correction-layout">
+        <div class="correction-image-column">
+            {% if correction_record.image_url %}
+            <img id="correctionPreview" class="correction-preview" src="{{ correction_record.image_url }}" alt="待修正的食物图片">
+            {% else %}
+            <div id="correctionPreviewEmpty" class="correction-preview empty-preview"><i data-lucide="image-off"></i><span>这条记录没有原始图片</span></div>
+            <img id="correctionPreview" class="correction-preview" style="display:none" alt="新食物图片预览">
+            {% endif %}
+            <label class="image-replace-button" for="correctionImage">
+                <i data-lucide="image-plus" class="icon-sm"></i>更换图片并获取新推荐
+            </label>
+            <input id="correctionImage" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+            {% if correction_record.image_url %}
+            <button id="refreshRecommendations" type="button" class="btn btn-secondary btn-sm btn-block">
+                <i data-lucide="sparkles" class="icon-sm"></i>根据原图重新推荐
+            </button>
+            {% endif %}
+            <p id="recommendationStatus" class="recommendation-status"></p>
+        </div>
+        <div class="correction-form-column">
+            <div class="recommendation-block">
+                <div class="recommendation-title"><i data-lucide="sparkles" class="icon-sm"></i>根据图片推荐修改</div>
+                <div id="correctionSuggestions" class="suggestion-chips">
+                    {% for suggestion in correction_suggestions %}
+                    <button type="button" class="suggestion-chip" data-food="{{ suggestion.food_name }}" data-weight="{{ suggestion.weight_grams or '' }}">
+                        <span>{{ suggestion.display_name }}</span>
+                        {% if suggestion.food_name != suggestion.display_name %}<small>{{ suggestion.food_name }}</small>{% endif %}
+                        {% if suggestion.confidence %}<em>{{ (suggestion.confidence * 100)|round|int }}%</em>{% endif %}
+                    </button>
+                    {% else %}
+                    <div class="no-suggestions">暂无图片推荐，可直接手动修改食物和克重。</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <form method="POST" action="/diet/correct/{{ correction_record.id }}" id="correctionForm">
+                <input type="hidden" name="return_tab" value="{{ active_tab }}">
+                <input type="hidden" name="image_data" id="correctionImageData">
+                <input type="hidden" name="recognition_suggestions" id="correctionSuggestionsData" value="{{ correction_record.recognition_suggestions or '' }}">
+                <div class="inline-entry-grid correction-fields">
+                    <div class="form-group">
+                        <label for="correctionFood">修改为</label>
+                        <select name="food_name" id="correctionFood" required>
+                            {% for food in foods %}
+                            <option value="{{ food.name }}" {{ 'selected' if food.name == correction_record.food_name }}>{{ food.name }}（{{ food.calories_per_100g }} kcal/100g）</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group compact-weight">
+                        <label for="correctionWeight">克重（g）</label>
+                        <input type="number" name="weight_grams" id="correctionWeight" value="{{ correction_record.weight_grams }}" step="0.5" min="0.5" max="5000" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg btn-block"><i data-lucide="check" class="icon-sm"></i>保存修正</button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if active_tab == 'today' %}
+    <section class="card diet-list-card">
+        <div class="section-heading-row">
+            <h2><i data-lucide="sun" class="icon-md"></i>今日记录</h2>
+            <span class="record-count">{{ today_records|length }} 条</span>
+        </div>
+        {% if today_records %}
+        <div class="diet-record-list">
+            {% for record in today_records %}{{ record_item(record, 'today') }}{% endfor %}
+        </div>
+        {% else %}
+        <div class="empty compact-empty">
+            <div class="empty-icon"><i data-lucide="utensils-crossed"></i></div>
+            <p>今天还没有饮食记录</p>
+            {% if viewed_user.id == user.id %}<small>可以使用下方手动添加，或通过图片识别记录。</small>{% endif %}
+        </div>
+        {% endif %}
+    </section>
+
+    {% if viewed_user.id == user.id %}
+    <details class="manual-entry-disclosure">
+        <summary class="manual-entry-trigger">
+            <span class="manual-entry-trigger-icon"><i data-lucide="plus"></i></span>
+            <span class="manual-entry-trigger-copy">
+                <strong>手动添加一餐</strong>
+                <small>点击展开录入食物与克重</small>
+            </span>
+            <i data-lucide="chevron-down" class="manual-entry-chevron"></i>
+        </summary>
+        <div class="manual-entry-expanded">
+            <form method="POST" action="/diet/record" class="inline-entry-form">
+                <input type="hidden" name="source_type" value="manual">
+                <div class="inline-entry-grid">
+                    <div class="form-group">
+                        <label for="foodSelect">食物</label>
+                        <select name="food_name" id="foodSelect" required>
+                            <option value="">选择食物</option>
+                            {% for food in foods %}
+                            <option value="{{ food.name }}">{{ food.name }}（{{ food.calories_per_100g }} kcal/100g）</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group compact-weight">
+                        <label for="weightInput">克重（g）</label>
+                        <input type="number" name="weight_grams" id="weightInput" placeholder="例如 200" step="0.5" min="0.5" max="5000" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary inline-submit"><i data-lucide="plus" class="icon-sm"></i>添加</button>
+                </div>
+            </form>
+        </div>
+    </details>
+
+    <section class="card card-accent-blue" style="text-align:center;">
+        <h2><i data-lucide="video" class="icon-md"></i>实时视频识别</h2>
+        <p style="color:var(--text2);font-size:13px;margin-bottom:16px;">持续采集眼镜视频流，电脑后端逐帧分析并融合结果，适合记录一餐的完整摄入过程。</p>
+        <div id="videoControls" style="display:none;max-width:620px;margin:0 auto 18px;text-align:left;padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--blue-light);">
+            <div style="font-weight:700;margin-bottom:10px;color:var(--blue-dark);"><i data-lucide="tv" class="icon-sm"></i> 视频后端</div>
+            <div class="form-group" style="margin-bottom:10px;">
+                <label>电脑视频服务地址</label>
+                <input id="videoBackendUrl" type="url" inputmode="url" placeholder="https://192.168.1.100:8000">
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                <button class="btn btn-primary btn-sm" type="button" onclick="createVideoSession()"><i data-lucide="plus-circle" class="icon-sm"></i> 创建视频会话</button>
+                <button class="btn btn-secondary btn-sm" type="button" onclick="openVideoDashboard()"><i data-lucide="layout-dashboard" class="icon-sm"></i> 打开识别结果页</button>
+                <button class="btn btn-danger btn-sm" type="button" onclick="finishVideoSession()"><i data-lucide="square" class="icon-sm"></i> 结束会话</button>
+            </div>
+            <div id="videoState" style="font-size:12px;color:var(--text2);margin-top:10px;">等待创建视频会话</div>
+        </div>
+        <div id="videoResult" style="display:none;max-width:620px;margin:0 auto;text-align:left;">
+            <div style="display:grid;gap:10px;">
+                <div id="videoFoods" style="display:grid;gap:10px;"></div>
+                <div id="videoIntake" style="display:none;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--orange-light);">
+                    <div style="font-weight:700;font-size:13px;color:var(--orange);margin-bottom:6px;"><i data-lucide="utensils" class="icon-sm"></i> 检测到进食事件</div>
+                    <div id="videoIntakeList" style="font-size:12px;color:var(--text2);"></div>
+                </div>
+                <div id="videoGuidance" style="font-size:12px;color:var(--text3);"></div>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+{% else %}
+    <section class="card diet-list-card">
+        <div class="section-heading-row">
+            <h2><i data-lucide="history" class="icon-md"></i>历史记录</h2>
+            <span class="record-count">{{ history_records|length }} 条</span>
+        </div>
+        {% if history_records %}
+        <div class="diet-history-list">
+            {% set last_date = namespace(v='') %}
+            {% for record in history_records %}
+                {% set record_date = record.intake_time[:10] if record.intake_time else '' %}
+                {% if record_date != last_date.v %}
+                    {% set last_date.v = record_date %}
+                    <div class="timeline-date">{{ record_date }}</div>
+                {% endif %}
+                {{ record_item(record, 'history') }}
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty compact-empty">
+            <div class="empty-icon"><i data-lucide="calendar-x"></i></div>
+            <p>暂无历史记录</p>
+        </div>
+        {% endif %}
+    </section>
+{% endif %}
+
+{% if correction_record %}
+<script>
+(function () {
+    var foodSelect = document.getElementById('correctionFood');
+    var weightInput = document.getElementById('correctionWeight');
+    var suggestionsBox = document.getElementById('correctionSuggestions');
+    var suggestionsData = document.getElementById('correctionSuggestionsData');
+    var imageData = document.getElementById('correctionImageData');
+    var status = document.getElementById('recommendationStatus');
+
+    function chooseSuggestion(foodName, weight) {
+        for (var i = 0; i < foodSelect.options.length; i++) {
+            if (foodSelect.options[i].value === foodName) {
+                foodSelect.selectedIndex = i;
+                break;
+            }
+        }
+        if (weight && Number(weight) >= 0.5) weightInput.value = Number(weight).toFixed(1);
+        foodSelect.focus();
+    }
+
+    function bindSuggestionButtons() {
+        suggestionsBox.querySelectorAll('.suggestion-chip').forEach(function (button) {
+            button.addEventListener('click', function () {
+                chooseSuggestion(button.dataset.food, button.dataset.weight);
+                suggestionsBox.querySelectorAll('.suggestion-chip').forEach(function (item) { item.classList.remove('selected'); });
+                button.classList.add('selected');
+            });
+        });
+    }
+
+    function renderSuggestions(foods) {
+        suggestionsBox.innerHTML = '';
+        var available = (foods || []).filter(function (food) { return food.available_for_record && food.record_food_name; });
+        if (!available.length) {
+            suggestionsBox.innerHTML = '<div class="no-suggestions">图片中没有匹配到食物库候选，请直接手动选择。</div>';
+            return;
+        }
+        available.slice(0, 8).forEach(function (food) {
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'suggestion-chip';
+            button.dataset.food = food.record_food_name;
+            button.dataset.weight = food.estimated_weight_g || '';
+            var confidence = Math.round(Number(food.confidence || 0) * 100);
+            button.innerHTML = '<span></span><small></small><em></em>';
+            button.querySelector('span').textContent = food.name || food.record_food_name;
+            button.querySelector('small').textContent = food.record_food_name;
+            button.querySelector('em').textContent = confidence ? confidence + '%' : '';
+            suggestionsBox.appendChild(button);
+        });
+        bindSuggestionButtons();
+    }
+
+    async function analyzeImage(image) {
+        status.textContent = '正在根据图片生成推荐…';
+        var response = await fetch('/api/recognition/analyze', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content},
+            body: JSON.stringify({image: image})
+        });
+        var payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || '图片识别失败');
+        suggestionsData.value = JSON.stringify(payload.foods || []);
+        renderSuggestions(payload.foods || []);
+        status.textContent = '已根据新图片更新推荐，请选择后保存。';
+    }
+
+    bindSuggestionButtons();
+    document.getElementById('correctionImage').addEventListener('change', function (event) {
+        var file = event.target.files && event.target.files[0];
+        if (!file) return;
+        if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size > 4 * 1024 * 1024) {
+            status.textContent = '请选择不超过 4 MB 的 JPG、PNG 或 WebP 图片。';
+            return;
+        }
+        var reader = new FileReader();
+        reader.onload = function () {
+            var image = String(reader.result || '');
+            imageData.value = image;
+            var preview = document.getElementById('correctionPreview');
+            preview.src = image;
+            preview.style.display = 'block';
+            var empty = document.getElementById('correctionPreviewEmpty');
+            if (empty) empty.style.display = 'none';
+            analyzeImage(image).catch(function (error) { status.textContent = error.message + '；仍可手动修改并保存。'; });
+        };
+        reader.readAsDataURL(file);
+    });
+
+    var refresh = document.getElementById('refreshRecommendations');
+    if (refresh) refresh.addEventListener('click', async function () {
+        refresh.disabled = true;
+        status.textContent = '正在重新分析原图…';
+        try {
+            var response = await fetch('/api/diet/{{ correction_record.id }}/recommendations', {
+                method: 'POST',
+                headers: {'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content}
+            });
+            var payload = await response.json();
+            if (!response.ok) throw new Error(payload.error || '重新推荐失败');
+            suggestionsData.value = JSON.stringify(payload.foods || []);
+            renderSuggestions(payload.foods || []);
+            status.textContent = '推荐已更新。';
+        } catch (error) {
+            status.textContent = error.message;
+        } finally {
+            refresh.disabled = false;
+        }
+    });
+})();
+</script>
+{% endif %}
+
+{% if active_tab == 'today' and viewed_user.id == user.id %}
+<script>
+(function () {
+    var controls = document.getElementById('videoControls');
+    var stateLabel = document.getElementById('videoState');
+    var backendInput = document.getElementById('videoBackendUrl');
+
+    window.quickFood = function (name, weight) {
+        var select = document.getElementById('foodSelect');
+        var weightInput = document.getElementById('weightInput');
+        if (!select || !weightInput) return;
+        for (var i = 0; i < select.options.length; i++) {
+            if (select.options[i].value === name) {
+                select.selectedIndex = i;
+                break;
+            }
+        }
+        weightInput.value = weight;
+        var disclosure = select.closest('details');
+        if (disclosure) disclosure.open = true;
+        select.scrollIntoView({behavior: 'smooth', block: 'center'});
+    };
+
+    window.saveVideoBackendUrl = function () {
+        var value = backendInput.value.trim();
+        if (window.RokidGlasses && window.RokidGlasses.setVideoBackendUrl) window.RokidGlasses.setVideoBackendUrl(value);
+        else if (window.RokidGlasses && window.RokidGlasses.setServerUrl) window.RokidGlasses.setServerUrl(value);
+    };
+    window.createVideoSession = function () {
+        try {
+            window.saveVideoBackendUrl();
+            window.RokidGlasses.createVideoSession();
+            stateLabel.textContent = '正在创建会话...';
+        } catch (error) { stateLabel.textContent = '创建失败：' + error.message; }
+    };
+    window.openVideoDashboard = function () {
+        try {
+            window.saveVideoBackendUrl();
+            window.RokidGlasses.loadVideoDashboard();
+        } catch (error) { stateLabel.textContent = '打开失败：' + error.message; }
+    };
+    window.finishVideoSession = function () {
+        try {
+            window.RokidGlasses.finishVideoSession();
+            stateLabel.textContent = '已结束会话';
+        } catch (error) { stateLabel.textContent = '结束失败：' + error.message; }
+    };
+
+    function renderVideoFoods(foods) {
+        var container = document.getElementById('videoFoods');
+        container.innerHTML = '';
+        if (!foods || !foods.length) { container.style.display = 'none'; return; }
+        container.style.display = 'grid';
+        foods.forEach(function (food) {
+            var card = document.createElement('div');
+            card.style.cssText = 'padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--card);';
+            var name = food.name || food.record_food_name || '未知食物';
+            var weight = Number(food.estimated_weight_g || food.weight_g || 0).toFixed(1);
+            var calories = Number((food.nutrition || {}).calories_kcal || food.calories || 0).toFixed(1);
+            var confidence = Math.round(Number(food.confidence || 0) * 100);
+            card.innerHTML = '<strong style="font-size:14px;"></strong><div style="font-size:12px;color:var(--text2);margin-top:4px;"></div>';
+            card.querySelector('strong').textContent = name;
+            card.querySelector('div').textContent = weight + 'g · ' + calories + ' kcal · 置信度 ' + confidence + '%';
+            if (food.available_for_record) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'btn btn-secondary btn-sm';
+                button.style.marginTop = '9px';
+                button.textContent = '填入记录：' + food.record_food_name;
+                button.addEventListener('click', function () {
+                    window.quickFood(food.record_food_name, Math.max(0.5, Number(food.estimated_weight_g || 0)).toFixed(1));
+                });
+                card.appendChild(button);
+            }
+            container.appendChild(card);
+        });
+    }
+
+    function renderVideoIntake(events) {
+        var box = document.getElementById('videoIntake');
+        var list = document.getElementById('videoIntakeList');
+        if (!events || !events.length) { box.style.display = 'none'; return; }
+        box.style.display = 'block';
+        list.innerHTML = '';
+        events.forEach(function (event) {
+            var row = document.createElement('div');
+            row.style.marginBottom = '4px';
+            row.textContent = (event.food_name || '食物') + ' ' + Number(event.weight_g || 0).toFixed(1) + 'g · ' + Number(event.calories || 0).toFixed(1) + ' kcal';
+            list.appendChild(row);
+        });
+    }
+
+    function updateVideoState(rawPayload) {
+        var payload = typeof rawPayload === 'string' ? JSON.parse(rawPayload) : rawPayload;
+        var state = payload.state || payload || {};
+        document.getElementById('videoResult').style.display = 'block';
+        stateLabel.textContent = state.guidance && state.guidance.message ? state.guidance.message : '视频会话运行中';
+        renderVideoFoods(state.foods);
+        renderVideoIntake(state.intake_events);
+        var quality = state.measurement_quality && state.measurement_quality.overall !== undefined ? state.measurement_quality.overall : 0;
+        var guidance = state.guidance && state.guidance.needed_action ? ' · 建议：' + state.guidance.needed_action : '';
+        document.getElementById('videoGuidance').textContent = '已分析 ' + (state.analyzed_frame_count || 0) + ' 帧 · 画面质量 ' + Math.round(Number(quality) * 100) + '%' + guidance;
+        lucide.createIcons();
+    }
+
+    window.RokidGlassesEvents = {
+        onVideoState: function (payload) { try { updateVideoState(payload); } catch (error) { stateLabel.textContent = error.message; } },
+        onVideoEvent: function (rawPayload) {
+            try {
+                var payload = typeof rawPayload === 'string' ? JSON.parse(rawPayload) : rawPayload;
+                if (payload.event === 'frame_analyzed' && payload.state) updateVideoState(payload);
+                else if (payload.event === 'intake_detected') {
+                    updateVideoState({state: {foods: payload.foods || [], intake_events: payload.intake_events || [], guidance: payload.guidance}});
+                    stateLabel.textContent = '检测到进食事件';
+                }
+            } catch (error) { stateLabel.textContent = error.message; }
+        },
+        onError: function (message) { stateLabel.textContent = message; }
+    };
+
+    if (window.RokidGlasses) {
+        controls.style.display = 'block';
+        var videoUrl = window.RokidGlasses.getVideoBackendUrl ? window.RokidGlasses.getVideoBackendUrl() :
+            (window.RokidGlasses.getServerUrl ? window.RokidGlasses.getServerUrl() : '');
+        backendInput.value = videoUrl;
+    }
+    if (location.search.indexOf('debug=rokid') !== -1) {
+        window.RokidGlasses = {
+            createVideoSession: function () { stateLabel.textContent = '[调试] 已调用 createVideoSession'; },
+            loadVideoDashboard: function () { window.open('https://10.72.14.153:8000/?session_id=demo', '_blank'); },
+            finishVideoSession: function () { stateLabel.textContent = '[调试] 已调用 finishVideoSession'; },
+            getVideoBackendUrl: function () { return 'https://10.72.14.153:8000'; },
+            setVideoBackendUrl: function () {}
+        };
+        controls.style.display = 'block';
+        backendInput.value = 'https://10.72.14.153:8000';
+        stateLabel.textContent = '调试模式：点击按钮会进行模拟调用';
+    }
+})();
+</script>
+{% endif %}
+{% endblock %}

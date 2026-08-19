@@ -1,0 +1,4 @@
+flask>=3.0,<4
+werkzeug>=3.0,<4
+qrcode>=7.4,<9
+pypng>=0.20220715.0

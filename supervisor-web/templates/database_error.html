@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}数据库未连接{% endblock %}
+{% block content %}
+<div class="auth-card">
+    <div class="auth-logo error-logo">!</div>
+    <h1>用户数据库未连接</h1>
+    <p>{{ message }}</p>
+    <p class="auth-note">请先启动用户端初始化数据库，或确认 USER_APP_DB_PATH 指向有效的 health.db。</p>
+</div>
+{% endblock %}

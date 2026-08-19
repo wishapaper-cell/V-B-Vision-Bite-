@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}添加共享伙伴 - V&amp;B{% endblock %}
+
+{% block hero %}
+<div class="hero-banner scanner-page">
+    <span class="hero-icon"><i data-lucide="user-plus" style="width:40px;height:40px;"></i></span>
+    <div class="greeting">共享关系</div>
+    <h1>添加伙伴</h1>
+    <p class="subtitle">扫码或输入分享码 · 设置备注 · 选择共享范围</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card card-accent-top scanner-card">
+    <h2><i data-lucide="scan-line" class="icon-md"></i>扫描对方分享码</h2>
+    <div class="scanner-box" id="scannerBox">
+        <div class="scanner-frame">
+            <div class="viewfinder" style="margin:0;background:transparent;">
+                <div class="corner tl"></div><div class="corner tr"></div>
+                <div class="corner bl"></div><div class="corner br"></div>
+                <div class="scan-line"></div>
+            </div>
+        </div>
+        <video id="video" style="display:none;width:100%;height:100%;object-fit:cover;"></video>
+        <input id="qrCapture" type="file" accept="image/*" capture="environment" hidden>
+    </div>
+    <div class="scanner-actions">
+        <button class="btn btn-primary" type="button" id="camBtn" onclick="startCamera()"><i data-lucide="scan-line" class="icon-sm"></i>开始扫码</button>
+        <button class="btn btn-secondary" type="button" id="stopBtn" onclick="stopCamera()" style="display:none;"><i data-lucide="x" class="icon-sm"></i>关闭相机</button>
+    </div>
+    <p id="scanStatus" class="scanner-status"></p>
+</div>
+
+<div class="card card-accent-blue" id="bindingFormCard">
+    <h2><i data-lucide="shield-check" class="icon-md"></i>发送绑定请求</h2>
+    <p class="form-intro">对方确认后关系才会生效。以下权限仅决定你愿意向对方分享什么，对方会单独设置自己的权限。</p>
+    <form method="POST" action="/bind" id="bindingForm">
+        <input type="hidden" name="mode" value="code">
+        <div class="form-group">
+            <label>对方分享码 <span class="required-mark">*</span></label>
+            <input type="text" name="bind_code" id="bindCodeInput" placeholder="输入 8 位分享码" required maxlength="8" autocomplete="off" class="code-input">
+        </div>
+        <div class="form-group">
+            <label>给对方的备注 <span class="optional-mark">选填</span></label>
+            <input type="text" name="remark" maxlength="40" placeholder="例如：妈妈、营养师小李">
+            <p class="form-hint">备注仅自己可见，绑定后可随时修改。</p>
+        </div>
+        <fieldset class="permission-fieldset">
+            <legend>允许对方查看</legend>
+            <label class="permission-option"><input type="checkbox" name="share_diet" value="1" checked><span><strong>饮食记录</strong><small>每餐食物、克重、热量和记录时间</small></span></label>
+            <label class="permission-option"><input type="checkbox" name="share_goal" value="1"><span><strong>健康目标</strong><small>当前管理模式和今日热量进度</small></span></label>
+            <label class="permission-option"><input type="checkbox" name="share_profile" value="1"><span><strong>身体资料</strong><small>身高、体重、年龄和性别</small></span></label>
+        </fieldset>
+        <button type="submit" class="btn btn-primary btn-lg btn-block"><i data-lucide="send" class="icon-sm"></i>发送请求</button>
+    </form>
+</div>
+
+<div class="page-back"><a href="/profile" class="btn btn-secondary btn-sm">返回个人主页</a></div>
+
+<script>
+var stream=null,scanLoop=null,detector=null;
+async function startCamera(){var button=document.getElementById('camBtn'),stop=document.getElementById('stopBtn'),video=document.getElementById('video'),status=document.getElementById('scanStatus');try{if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error('camera-unavailable');stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});video.srcObject=stream;video.style.display='block';await video.play();button.style.display='none';stop.style.display='inline-flex';status.textContent='对准二维码即可自动识别';if('BarcodeDetector' in window){detector=new BarcodeDetector({formats:['qr_code']});detectQr(video);}else{stopCamera();status.textContent='当前设备不支持实时识别，已切换为拍照';document.getElementById('qrCapture').click();}}catch(error){status.textContent='实时扫码不可用，已切换为拍照识别';document.getElementById('qrCapture').click();}}
+async function detectQr(video){if(!detector||!stream)return;try{var codes=await detector.detect(video);if(codes.length&&codes[0].rawValue){stopCamera();useBindingCode(codes[0].rawValue);return;}}catch(error){}scanLoop=requestAnimationFrame(function(){detectQr(video);});}
+async function detectCapturedQr(event){var file=event.target.files&&event.target.files[0],status=document.getElementById('scanStatus');if(!file)return;try{if(!('BarcodeDetector' in window))throw new Error('unsupported');detector=detector||new BarcodeDetector({formats:['qr_code']});var image=await createImageBitmap(file);var codes=await detector.detect(image);image.close();if(codes.length&&codes[0].rawValue){useBindingCode(codes[0].rawValue);return;}status.textContent='未识别到二维码，请重新拍摄或手动输入';}catch(error){status.textContent='当前设备无法识别照片，请手动输入分享码';}finally{event.target.value='';}}
+function stopCamera(){if(scanLoop)cancelAnimationFrame(scanLoop);if(stream){stream.getTracks().forEach(function(track){track.stop();});stream=null;}document.getElementById('video').style.display='none';document.getElementById('camBtn').style.display='inline-flex';document.getElementById('stopBtn').style.display='none';}
+function useBindingCode(code){var value=String(code||'').trim().toUpperCase();var match=value.match(/[A-Z0-9]{8}/);document.getElementById('bindCodeInput').value=match?match[0]:value;document.getElementById('scanStatus').textContent='已读取分享码，请确认备注和权限后发送';document.getElementById('bindingFormCard').scrollIntoView({behavior:'smooth',block:'start'});}
+window.addEventListener('pagehide',stopCamera);
+document.getElementById('qrCapture').addEventListener('change',detectCapturedQr);
+</script>
+{% endblock %}

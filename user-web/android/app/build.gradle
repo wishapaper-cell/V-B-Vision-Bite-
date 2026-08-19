@@ -1,0 +1,162 @@
+plugins {
+    id "com.android.application"
+    id "com.chaquo.python"
+}
+
+def canonicalAppRoot = rootProject.projectDir.parentFile
+def workspaceRoot = canonicalAppRoot.parentFile.parentFile
+def generatedPython = layout.buildDirectory.dir("generated/healthPython")
+def generatedAssets = layout.buildDirectory.dir("generated/healthAssets")
+def siblingStreamerApk = new File(
+        workspaceRoot,
+        "apps/rokid-streamer/app/build/outputs/apk/debug/app-debug.apk"
+)
+
+def resolveBuildPython = {
+    def configuredPath = providers.gradleProperty("healthBuildPython").orNull
+    if (!configuredPath) {
+        configuredPath = System.getenv("HEALTH_BUILD_PYTHON")
+    }
+    if (configuredPath) {
+        def configuredFile = new File(configuredPath)
+        return (configuredFile.isAbsolute()
+                ? configuredFile
+                : new File(rootProject.projectDir, configuredPath)).absolutePath
+    }
+    def candidates = [
+            new File(canonicalAppRoot, ".venv/Scripts/python.exe"),
+            new File(workspaceRoot, ".workspace/venvs/user-web/Scripts/python.exe")
+    ]
+    def detected = candidates.find { it.isFile() }
+    return (detected ?: candidates.first()).absolutePath
+}
+
+def resolveStreamerApk = {
+    def configuredPath = providers.gradleProperty("rokidStreamerApk").orNull
+    if (configuredPath) {
+        def configuredFile = new File(configuredPath)
+        return configuredFile.isAbsolute()
+                ? configuredFile
+                : new File(rootProject.projectDir, configuredPath)
+    }
+    return siblingStreamerApk
+}
+
+android {
+    namespace "com.healthydiet.app"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.healthydiet.app.rokid"
+        minSdk 31
+        targetSdk 35
+        versionCode 8
+        versionName "1.2.1-screen-off-streaming"
+
+        ndk {
+            abiFilters "arm64-v8a", "armeabi-v7a", "x86_64"
+        }
+    }
+
+    sourceSets {
+        main {
+            python.srcDir(generatedPython)
+            assets.srcDir(generatedAssets)
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+chaquopy {
+    defaultConfig {
+        version = "3.11"
+        buildPython resolveBuildPython()
+        pip {
+            install "flask>=3.0,<4"
+            install "werkzeug>=3.0,<4"
+            install "qrcode>=7.4,<9"
+            install "pypng>=0.20220715.0"
+        }
+    }
+}
+
+tasks.register("syncHealthPython", Copy) {
+    from(canonicalAppRoot) {
+        include "app.py"
+        include "database.py"
+        include "food_db.py"
+        include "recognition_adapter.py"
+    }
+    into(generatedPython)
+}
+
+tasks.register("syncHealthAssets", Copy) {
+    from(new File(canonicalAppRoot, "templates")) {
+        into "web/templates"
+    }
+    from(new File(canonicalAppRoot, "static")) {
+        into "web/static"
+    }
+    into(generatedAssets)
+}
+
+tasks.register("syncRokidStreamerApk") {
+    dependsOn("syncHealthAssets")
+    def sourceProvider = providers.provider { resolveStreamerApk() }
+    def targetProvider = generatedAssets.map { it.file("rokid-glasses-streamer.apk") }
+    inputs.files(providers.provider {
+        def source = sourceProvider.get()
+        return source.isFile() ? [source] : []
+    })
+    outputs.file(targetProvider)
+    doLast {
+        def target = targetProvider.get().asFile
+        if (target.exists() && !target.delete()) {
+            throw new GradleException("Cannot replace generated Rokid streamer asset: ${target}")
+        }
+        def source = sourceProvider.get()
+        if (!source.isFile()) {
+            logger.warn(
+                    "Rokid streamer APK not found at ${source}. " +
+                            "The phone APK will still build, but in-app installation will report a clear error. " +
+                            "Build the sibling streamer project first or pass -ProkidStreamerApk=<path>."
+            )
+            return
+        }
+        target.parentFile.mkdirs()
+        copy {
+            from(source)
+            into(target.parentFile)
+            rename { "rokid-glasses-streamer.apk" }
+        }
+        logger.lifecycle("Embedded Rokid streamer APK from ${source}")
+    }
+}
+
+tasks.named("preBuild").configure {
+    dependsOn("syncHealthPython", "syncHealthAssets", "syncRokidStreamerApk")
+}
+
+tasks.configureEach { task ->
+    if (task.name.startsWith("merge") && task.name.endsWith("PythonSources")) {
+        task.dependsOn("syncHealthPython")
+    }
+    if (task.name.startsWith("merge") && task.name.endsWith("Assets")) {
+        task.dependsOn("syncHealthAssets", "syncRokidStreamerApk")
+    }
+}
+
+dependencies {
+    implementation files("libs/client-l-1.0.4.aar")
+    implementation files("libs/cxr-service-bridge-1.0.aar")
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.24"
+    implementation "com.google.code.gson:gson:2.11.0"
+}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}菜谱管理{% endblock %}
+{% block page_title %}菜品与食谱管理{% endblock %}
+{% block page_desc %}维护菜谱步骤、配料、适合人群和营养数据{% endblock %}
+{% block content %}
+<section class="panel">
+    <div class="panel-head"><div><h2>新增或修改菜谱</h2><p>配料格式：食材名称|数量|单位|备注，每行一种</p></div><a class="btn ghost" href="{{ url_for('export_recipes') }}">导出 CSV</a></div>
+    <form class="profile-form" method="post" id="recipeForm">
+        <input type="hidden" name="recipe_id" id="recipeId">
+        <div class="form-grid">
+            <label>菜谱名称<input name="name" id="recipeName" required></label><label>分类<input name="category" id="recipeCategory" placeholder="早餐、家常菜、低脂餐等"></label><label>份数<input type="number" min="1" name="servings" id="recipeServings" value="1"></label><label>每份热量 kcal<input type="number" step="0.1" min="0" name="calories" id="recipeCalories" value="0"></label>
+            <label>蛋白质 g<input type="number" step="0.1" min="0" name="protein" id="recipeProtein" value="0"></label><label>脂肪 g<input type="number" step="0.1" min="0" name="fat" id="recipeFat" value="0"></label><label>碳水 g<input type="number" step="0.1" min="0" name="carbs" id="recipeCarbs" value="0"></label><label>膳食纤维 g<input type="number" step="0.1" min="0" name="fiber" id="recipeFiber" value="0"></label>
+            <label>适合人群<input name="suitable_for" id="recipeSuitable" placeholder="减脂、控糖等"></label><label>不适合人群<input name="avoid_for" id="recipeAvoid" placeholder="过敏或慢病限制"></label><label style="grid-column:span 2">图片地址<input name="image_url" id="recipeImage"></label>
+        </div>
+        <div class="form-grid health-grid"><label>菜谱简介<textarea name="description" id="recipeDescription" rows="5"></textarea></label><label>制作步骤<textarea name="instructions" id="recipeInstructions" rows="5"></textarea></label><label>配料清单<textarea name="ingredients" id="recipeIngredients" rows="5" placeholder="鸡胸肉|150|g|去皮"></textarea></label></div>
+        <div class="toolbar"><button class="btn primary">保存菜谱</button><button class="btn ghost" type="button" onclick="resetRecipe()">清空</button></div>
+    </form>
+</section>
+<section class="panel">
+    <div class="panel-head"><div><h2>菜谱列表</h2><p>共 {{ recipes|length }} 个菜谱</p></div></div>
+    <div class="table-wrap"><table><thead><tr><th>菜谱</th><th>分类</th><th>每份营养</th><th>适合/避免</th><th>状态</th><th>更新时间</th><th></th></tr></thead><tbody>
+        {% for recipe in recipes %}<tr><td><strong>{{ recipe.name }}</strong><small>{{ recipe.description or '暂无简介' }}</small></td><td>{{ recipe.category or '未分类' }}<small>{{ recipe.servings }} 份</small></td><td>{{ recipe.calories_per_serving }} kcal<small>蛋白 {{ recipe.protein_g }}g · 脂肪 {{ recipe.fat_g }}g · 碳水 {{ recipe.carbs_g }}g</small></td><td>{{ recipe.suitable_for or '—' }}<small>避免：{{ recipe.avoid_for or '—' }}</small></td><td><span class="tag {{ 'enabled' if recipe.active else 'disabled' }}">{{ '已发布' if recipe.active else '已下架' }}</span></td><td>{{ recipe.updated_at }}</td><td><div class="toolbar"><button class="link-button" type="button" onclick='editRecipe({{ recipe|tojson }})'>编辑</button><form method="post" action="{{ url_for('toggle_recipe_status', recipe_id=recipe.id) }}"><button class="link-button">{{ '下架' if recipe.active else '发布' }}</button></form><form method="post" action="{{ url_for('delete_recipe', recipe_id=recipe.id) }}" onsubmit="return confirm('确定删除该菜谱吗？')"><button class="link-button danger-text">删除</button></form></div></td></tr>{% else %}<tr><td colspan="7" class="empty">暂无菜谱</td></tr>{% endfor %}
+    </tbody></table></div>
+</section>
+<script>
+function editRecipe(r){recipeId.value=r.id;recipeName.value=r.name;recipeCategory.value=r.category||'';recipeServings.value=r.servings||1;recipeCalories.value=r.calories_per_serving||0;recipeProtein.value=r.protein_g||0;recipeFat.value=r.fat_g||0;recipeCarbs.value=r.carbs_g||0;recipeFiber.value=r.fiber_g||0;recipeSuitable.value=r.suitable_for||'';recipeAvoid.value=r.avoid_for||'';recipeImage.value=r.image_url||'';recipeDescription.value=r.description||'';recipeInstructions.value=r.instructions||'';recipeIngredients.value=r.ingredients_text||'';recipeForm.scrollIntoView({behavior:'smooth'});}
+function resetRecipe(){recipeForm.reset();recipeId.value='';}
+</script>
+{% endblock %}

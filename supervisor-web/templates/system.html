@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}系统运维{% endblock %}
+{% block page_title %}系统运维{% endblock %}
+{% block page_desc %}查看运行状态、数据库规模并创建安全备份{% endblock %}
+{% block content %}
+<div class="stat-grid"><div class="stat"><span>运行时间</span><strong>{{ info.uptime_minutes }}</strong><small>分钟</small></div><div class="stat"><span>Python</span><strong>{{ info.python }}</strong><small>运行环境</small></div><div class="stat"><span>用户数据库</span><strong>{{ (info.user_db_size / 1024)|round(1) }}</strong><small>KB</small></div><div class="stat accent"><span>管理数据库</span><strong>{{ (info.admin_db_size / 1024)|round(1) }}</strong><small>KB</small></div></div>
+<section class="panel"><div class="panel-head"><div><h2>数据规模</h2><p>当前数据库主要业务表记录数</p></div></div><div class="metric-grid"><div class="metric"><span>用户</span><strong>{{ tables.users }}</strong></div><div class="metric"><span>饮食记录</span><strong>{{ tables.diet_records }}</strong></div><div class="metric"><span>食物</span><strong>{{ tables.food_library }}</strong></div><div class="metric"><span>菜谱</span><strong>{{ tables.recipes }}</strong></div><div class="metric"><span>反馈工单</span><strong>{{ tables.feedback_tickets }}</strong></div></div></section>
+<section class="panel"><div class="panel-head"><div><h2>数据库备份</h2><p>备份保存在工作区运行数据目录，不覆盖原数据库</p></div><form method="post" action="{{ url_for('create_backup') }}" onsubmit="return confirm('现在创建用户数据库和管理数据库备份吗？')"><button class="btn primary">立即备份</button></form></div><div class="table-wrap"><table><thead><tr><th>文件</th><th>大小</th><th>创建时间</th></tr></thead><tbody>{% for backup in backups %}<tr><td><code>{{ backup.name }}</code></td><td>{{ (backup.size / 1024)|round(1) }} KB</td><td>{{ backup.modified }}</td></tr>{% else %}<tr><td colspan="3" class="empty">尚未创建备份</td></tr>{% endfor %}</tbody></table></div></section>
+<section class="panel"><div class="panel-head"><div><h2>数据库位置</h2><p>用于故障排查，请勿在程序运行时手动修改</p></div></div><p><strong>用户数据库：</strong><code>{{ info.user_db_path }}</code></p><p><strong>管理数据库：</strong><code>{{ info.admin_db_path }}</code></p></section>
+{% endblock %}

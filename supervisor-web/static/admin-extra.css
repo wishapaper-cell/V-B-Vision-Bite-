@@ -1,0 +1,44 @@
+.profile-form{display:flex;flex-direction:column;gap:20px}
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.form-grid label{font-size:12px;font-weight:700;color:#526158}
+.form-grid input,.form-grid select,.form-grid textarea{display:block;width:100%;margin-top:6px}
+.form-grid textarea{resize:vertical;min-height:96px;font-family:inherit}
+.health-grid{grid-template-columns:repeat(3,1fr)}
+.tag.enabled,.tag.risk-low{background:#e9f8f0;color:#176b4d}
+.tag.disabled,.tag.risk-high{background:#ffebeb;color:#a72d2d}
+.tag.risk-medium{background:#fff3df;color:#8a5811}
+.record-photo{max-width:360px;width:100%;border-radius:14px;border:1px solid var(--line)}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.actions-cell{display:flex;align-items:center;gap:10px}
+.btn.small{padding:7px 11px;font-size:12px}
+.invite-register-link{display:block;text-align:center;margin-top:14px;color:var(--green);font-weight:700;text-decoration:none}
+.invite-register-link:hover{text-decoration:underline}
+.register-card{max-width:520px;margin:auto}
+.admin-invite-form{display:grid;grid-template-columns:1fr 1fr 180px auto;gap:14px;align-items:end}
+.admin-invite-form label{font-size:12px;font-weight:700;color:#526158}
+.admin-invite-form input,.admin-invite-form select{display:block;width:100%;margin-top:6px}
+.invite-copy-panel{display:flex;align-items:center;justify-content:space-between;gap:20px;background:#e9f8f0;border:1px solid #bfe5d1;border-radius:15px;padding:18px 22px;margin-bottom:20px;color:#176b4d}
+.invite-copy-panel span,.invite-copy-panel small{display:block}.invite-copy-panel span{font-size:12px;font-weight:700}.invite-copy-panel strong{display:block;font-size:23px;letter-spacing:2px;margin:5px 0}.invite-copy-panel small{color:#56806d}
+.invite-copy-panel .btn.copied{background:#125b43}
+.tag.approval-approved,.tag.invite-used{background:#e9f8f0;color:#176b4d}
+.tag.approval-pending,.tag.invite-active{background:#fff3df;color:#8a5811}
+.tag.approval-rejected,.tag.invite-revoked{background:#ffebeb;color:#a72d2d}
+.tag.invite-expired{background:#edf2ef;color:#65736c}
+.detail-head .user-diet-actions{margin-left:auto}
+.detail-head .user-diet-actions .btn{margin-left:0}
+.metric small{display:block;color:#8d9a93;font-size:11px;margin-top:6px}
+.accent-metric{background:linear-gradient(140deg,#176b4d,#23966b);color:#fff;border-color:transparent}
+.accent-metric span,.accent-metric small{color:rgba(255,255,255,.76)}
+.calorie-chart{height:285px;min-width:960px;display:grid;grid-template-columns:repeat(30,minmax(22px,1fr));gap:6px;align-items:end;position:relative;padding:20px 4px 0}
+.calorie-chart:before{content:"";position:absolute;left:0;right:0;bottom:var(--target-bottom);border-top:2px dashed #36a778;opacity:.7;z-index:1}
+.target-line{position:absolute;right:0;bottom:calc(var(--target-bottom) + 4px);color:#17704f;font-size:11px;font-weight:700;z-index:2}
+.calorie-day{height:255px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;position:relative;z-index:2;font-size:10px;color:var(--muted)}
+.calorie-value{font-size:9px;color:#6f7d76;min-height:12px}
+.calorie-track{height:220px;width:100%;display:flex;align-items:flex-end;justify-content:center}
+.calorie-bar{width:70%;min-width:6px;min-height:2px;border-radius:5px 5px 2px 2px;background:#dfa844}
+.calorie-bar.hit{background:#2eb47d}.calorie-bar.high{background:#df6b62}.calorie-bar.low{background:#dfa844}
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.metric{padding:16px;border-radius:13px;background:#f7faf8;border:1px solid var(--line)}
+.metric span{display:block;color:var(--muted);font-size:12px}.metric strong{font-size:22px;display:block;margin-top:5px}
+@media(max-width:1050px){.form-grid,.health-grid,.metric-grid{grid-template-columns:repeat(2,1fr)}.admin-invite-form{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){.form-grid,.health-grid,.metric-grid,.admin-invite-form{grid-template-columns:1fr}.detail-head .user-diet-actions{margin-left:0}.calorie-chart{min-width:820px}.invite-copy-panel{align-items:stretch;flex-direction:column}.invite-copy-panel .btn{width:100%}}

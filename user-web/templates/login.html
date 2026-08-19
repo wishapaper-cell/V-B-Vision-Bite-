@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block body_class %}auth-page{% endblock %}
+{% block background %}{% endblock %}
+{% block title %}登录 - V&amp;B{% endblock %}
+{% block content %}
+
+<div class="card login-card">
+    <div class="brand-header">
+        <span class="brand-icon"><img src="{{ url_for('static', filename='brand/vb-icon-192.png', v='20260725-monogram-glow-v5') }}" alt="V&amp;B"></span>
+        <h1>V&amp;B</h1>
+        <p>看见每一餐，平衡每一天</p>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchLogin('password')"><i data-lucide="key" class="icon-sm"></i>密码</div>
+        <div class="tab" onclick="switchLogin('sms')"><i data-lucide="smartphone" class="icon-sm"></i>短信</div>
+        <div class="tab" onclick="switchLogin('email')"><i data-lucide="mail" class="icon-sm"></i>邮箱</div>
+    </div>
+
+    <div id="tab-password" class="tab-content active">
+        <form method="POST">
+            <input type="hidden" name="mode" value="password">
+            <div class="form-group">
+                <label>手机号 / 邮箱</label>
+                <input type="text" name="phone" placeholder="输入注册时使用的手机号或邮箱" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" name="password" placeholder="输入密码" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg btn-block">登 录</button>
+        </form>
+    </div>
+
+    <div id="tab-sms" class="tab-content">
+        <form method="POST">
+            <input type="hidden" name="mode" value="sms">
+            <div class="form-group">
+                <label>手机号</label>
+                <input type="tel" name="phone" id="smsPhone" placeholder="输入已注册的手机号" required maxlength="11" pattern="1[3-9][0-9]{9}" inputmode="numeric" autocomplete="tel">
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-end;">
+                <div class="form-group" style="flex:1;margin-bottom:0;">
+                    <label>验证码</label>
+                    <input type="text" name="code" placeholder="6位验证码" required maxlength="6" style="letter-spacing:4px;font-size:18px;text-align:center;">
+                </div>
+                <button type="button" class="btn btn-outline" onclick="sendLoginCode('sms')" id="smsLoginBtn" style="white-space:nowrap;margin-bottom:18px;">发送验证码</button>
+            </div>
+            <div id="smsLoginBanner" class="sms-banner" style="display:none;"></div>
+            <button type="submit" class="btn btn-primary btn-lg btn-block">登 录</button>
+        </form>
+    </div>
+
+    <div id="tab-email" class="tab-content">
+        <form method="POST">
+            <input type="hidden" name="mode" value="email">
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" name="email" id="emailLogin" placeholder="输入已注册的邮箱" required autocomplete="email">
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-end;">
+                <div class="form-group" style="flex:1;margin-bottom:0;">
+                    <label>验证码</label>
+                    <input type="text" name="code" placeholder="6位验证码" required maxlength="6" style="letter-spacing:4px;font-size:18px;text-align:center;">
+                </div>
+                <button type="button" class="btn btn-outline" onclick="sendLoginCode('email')" id="emailLoginBtn" style="white-space:nowrap;margin-bottom:18px;">发送验证码</button>
+            </div>
+            <div id="emailLoginBanner" class="sms-banner" style="display:none;"></div>
+            <button type="submit" class="btn btn-primary btn-lg btn-block">登 录</button>
+        </form>
+    </div>
+
+    <div class="social-btns">
+        <div class="social-btn qq">QQ 登录<span class="soon">即将上线</span></div>
+        <div class="social-btn wechat">微信登录<span class="soon">即将上线</span></div>
+    </div>
+
+    <p style="text-align:center;margin-top:20px;font-size:13px;color:var(--text2);">
+        还没有账号？<a href="/register" style="color:var(--green);font-weight:700;">立即注册 &rarr;</a>
+    </p>
+</div>
+
+<script>
+function switchLogin(type) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    var tabs = document.querySelectorAll('.tab');
+    tabs[type==='password'?0:type==='sms'?1:2].classList.add('active');
+    document.getElementById('tab-' + type).classList.add('active');
+    lucide.createIcons();
+}
+
+async function sendLoginCode(type) {
+    var phone = type === 'sms' ? document.getElementById('smsPhone').value.trim() : '';
+    var email = type === 'email' ? document.getElementById('emailLogin').value.trim() : '';
+    var btn = document.getElementById(type === 'sms' ? 'smsLoginBtn' : 'emailLoginBtn');
+    if (type === 'sms' && !/^1[3-9]\d{9}$/.test(phone)) { alert('请输入正确的中国大陆手机号'); return; }
+    if (type === 'email' && !email) { alert('请输入邮箱'); return; }
+    btn.disabled = true; btn.textContent = '发送中...';
+    var resp = await fetch('/send_login_code', {
+        method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content},
+        body: type === 'sms' ? 'phone=' + encodeURIComponent(phone) : 'email=' + encodeURIComponent(email)
+    });
+    var data = await resp.json();
+    btn.disabled = false; btn.textContent = '发送验证码';
+    if (data.ok) {
+        var bannerId = type === 'sms' ? 'smsLoginBanner' : 'emailLoginBanner';
+        var b = document.getElementById(bannerId);
+        b.style.display = 'block';
+        b.innerHTML = '验证码已发送（模拟）<div class="code">' + data.code + '</div>';
+    } else { alert(data.msg); }
+}
+</script>
+{% endblock %}

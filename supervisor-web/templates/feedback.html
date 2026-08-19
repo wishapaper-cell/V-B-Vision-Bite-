@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}反馈与咨询{% endblock %}
+{% block page_title %}反馈与咨询管理{% endblock %}
+{% block page_desc %}接收、分类、回复并跟踪用户问题{% endblock %}
+{% block content %}
+<section class="panel">
+    <div class="panel-head"><div><h2>新建工单</h2><p>可记录电话、线下或其他渠道收到的反馈</p></div><a class="btn ghost" href="{{ url_for('export_feedback') }}">导出 CSV</a></div>
+    <form class="profile-form" method="post">
+        <div class="form-grid"><label>关联用户<select name="user_id"><option value="">不关联用户</option>{% for user in users %}<option value="{{ user.id }}">{{ user.nickname }} · {{ user.phone }}</option>{% endfor %}</select></label><label>分类<select name="category"><option value="feedback">意见反馈</option><option value="consultation">健康咨询</option><option value="complaint">投诉</option><option value="account">账号问题</option><option value="technical">技术问题</option></select></label><label>优先级<select name="priority"><option value="low">低</option><option value="normal" selected>普通</option><option value="high">高</option><option value="urgent">紧急</option></select></label><label>联系方式<input name="contact"></label></div>
+        <label>主题<input name="subject" required></label><label>内容<textarea name="content" rows="4" required></textarea></label><button class="btn primary">创建工单</button>
+    </form>
+</section>
+<section class="panel">
+    <form class="filters" method="get"><input name="q" value="{{ query }}" placeholder="搜索主题、内容或用户"><select name="status"><option value="">全部状态</option><option value="open" {{ 'selected' if status == 'open' }}>待处理</option><option value="processing" {{ 'selected' if status == 'processing' }}>处理中</option><option value="resolved" {{ 'selected' if status == 'resolved' }}>已解决</option><option value="closed" {{ 'selected' if status == 'closed' }}>已关闭</option></select><select name="category"><option value="">全部分类</option><option value="feedback" {{ 'selected' if category == 'feedback' }}>意见反馈</option><option value="consultation" {{ 'selected' if category == 'consultation' }}>健康咨询</option><option value="complaint" {{ 'selected' if category == 'complaint' }}>投诉</option><option value="account" {{ 'selected' if category == 'account' }}>账号问题</option><option value="technical" {{ 'selected' if category == 'technical' }}>技术问题</option></select><button class="btn primary">筛选</button><a class="btn ghost" href="{{ url_for('feedback') }}">重置</a></form>
+    <div class="ticket-list">
+    {% for ticket in tickets %}
+        <article class="panel" style="box-shadow:none;background:#fafcfb">
+            <div class="panel-head"><div><h2>#{{ ticket.id }} {{ ticket.subject }}</h2><p>{{ ticket.nickname or '未关联用户' }} {{ ticket.phone or ticket.contact }} · {{ ticket.created_at }}</p></div><div class="toolbar"><span class="tag risk-{{ 'high' if ticket.priority in ('high','urgent') else 'medium' if ticket.priority == 'normal' else 'low' }}">{{ ticket.priority }}</span><span class="tag {{ 'enabled' if ticket.status in ('resolved','closed') else 'disabled' }}">{{ ticket.status }}</span></div></div>
+            <p>{{ ticket.content }}</p>
+            <form class="profile-form" method="post" action="{{ url_for('update_feedback', ticket_id=ticket.id) }}"><div class="form-grid"><label>状态<select name="status"><option value="open" {{ 'selected' if ticket.status == 'open' }}>待处理</option><option value="processing" {{ 'selected' if ticket.status == 'processing' }}>处理中</option><option value="resolved" {{ 'selected' if ticket.status == 'resolved' }}>已解决</option><option value="closed" {{ 'selected' if ticket.status == 'closed' }}>已关闭</option></select></label><label>优先级<select name="priority"><option value="low" {{ 'selected' if ticket.priority == 'low' }}>低</option><option value="normal" {{ 'selected' if ticket.priority == 'normal' }}>普通</option><option value="high" {{ 'selected' if ticket.priority == 'high' }}>高</option><option value="urgent" {{ 'selected' if ticket.priority == 'urgent' }}>紧急</option></select></label></div><label>处理回复<textarea name="admin_reply" rows="3">{{ ticket.admin_reply or '' }}</textarea></label><button class="btn primary">保存处理结果</button></form>
+        </article>
+    {% else %}<div class="empty">暂无反馈或咨询工单</div>{% endfor %}
+    </div>
+</section>
+{% endblock %}

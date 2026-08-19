@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}帮助中心 - V&amp;B{% endblock %}
+
+{% block hero %}
+<div class="hero-banner">
+    <span class="hero-icon"><i data-lucide="help-circle" style="width:40px;height:40px;"></i></span>
+    <div class="greeting">帮助中心</div>
+    <h1>使用指南</h1>
+    <p class="subtitle">快速上手 · 常见问题 · 功能说明</p>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="card card-accent-top">
+    <h2><i data-lucide="rocket" class="icon-md"></i>快速入门</h2>
+    <div class="stats" style="margin-bottom:0;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));">
+        <div class="stat-card green"><div class="stat-icon"><i data-lucide="user-plus"></i></div><div class="stat-value" style="font-size:14px;">注册账号</div><div class="stat-label">手机号 + 验证码</div></div>
+        <div class="stat-card blue"><div class="stat-icon"><i data-lucide="target"></i></div><div class="stat-value" style="font-size:14px;">设置目标</div><div class="stat-label">身高体重 &rarr; BMR</div></div>
+        <div class="stat-card orange"><div class="stat-icon"><i data-lucide="camera"></i></div><div class="stat-value" style="font-size:14px;">记录饮食</div><div class="stat-label">识别或手动录入</div></div>
+        <div class="stat-card purple"><div class="stat-icon"><i data-lucide="link"></i></div><div class="stat-value" style="font-size:14px;">共享关系</div><div class="stat-label">双方确认并授权</div></div>
+    </div>
+</div>
+
+<div class="card">
+    <h2><i data-lucide="link" class="icon-md"></i>如何绑定？</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div style="background:var(--green-lighter);padding:16px;border-radius:var(--radius-sm);">
+            <strong style="color:var(--green-dark);">发送请求</strong>
+            <ol style="padding-left:18px;margin-top:8px;font-size:13px;line-height:1.8;color:var(--text2);">
+                <li>对方在个人主页分享二维码或分享码</li>
+                <li>你扫码后填写备注，并选择自己愿意共享的数据</li>
+            </ol>
+        </div>
+        <div style="background:var(--blue-light);padding:16px;border-radius:var(--radius-sm);">
+            <strong style="color:var(--blue-dark);">确认与管理</strong>
+            <ol style="padding-left:18px;margin-top:8px;font-size:13px;line-height:1.8;color:var(--text2);">
+                <li>对方在个人主页确认或拒绝请求</li>
+                <li>双方可独立修改备注和共享权限，也可解除绑定</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2><i data-lucide="target" class="icon-md"></i>三类健康目标</h2>
+    <table>
+        <tr><th>目标</th><th>适用人群</th><th>核心指标</th></tr>
+        <tr><td><strong>体重管理</strong></td><td>减脂/增重/维持体重</td><td>热量预算、TDEE</td></tr>
+        <tr><td><strong>血糖管理</strong></td><td>糖尿病/血糖异常</td><td>碳水摄入、低 GI 食物</td></tr>
+        <tr><td><strong>血压管理</strong></td><td>高血压/控盐需求</td><td>钠摄入、体重趋势</td></tr>
+    </table>
+</div>
+
+<div class="card card-accent-top">
+    <h2><i data-lucide="calculator" class="icon-md"></i>热量计算公式</h2>
+    <p style="margin-bottom:12px;">使用 <strong style="color:var(--green);">Mifflin-St Jeor 公式</strong>（国际公认标准）计算 BMR：</p>
+    <div style="background:#f9fafb;padding:16px;border-radius:var(--radius-sm);font-family:'SF Mono','Consolas',monospace;font-size:13px;line-height:1.8;">
+        男性：BMR = 10 &times; 体重 + 6.25 &times; 身高 &minus; 5 &times; 年龄 + 5<br>
+        女性：BMR = 10 &times; 体重 + 6.25 &times; 身高 &minus; 5 &times; 年龄 &minus; 161
+    </div>
+    <p style="margin-top:10px;font-size:13px;color:var(--text2);">TDEE = BMR &times; 活动系数（默认 &times;1.2，轻度活动）</p>
+</div>
+
+<div class="card card-accent-blue">
+    <h2><i data-lucide="lock-keyhole" class="icon-md"></i>密码要求</h2>
+    <div class="stats" style="margin-bottom:0;grid-template-columns:repeat(auto-fit, minmax(100px, 1fr));">
+        <div class="stat-card green"><div class="stat-icon"><i data-lucide="hash"></i></div><div class="stat-value" style="font-size:18px;">&ge; 8</div><div class="stat-label">最少位数</div></div>
+        <div class="stat-card blue"><div class="stat-icon"><i data-lucide="letter-text"></i></div><div class="stat-value" style="font-size:18px;">A-Z</div><div class="stat-label">大写字母</div></div>
+        <div class="stat-card orange"><div class="stat-icon"><i data-lucide="type"></i></div><div class="stat-value" style="font-size:18px;">a-z</div><div class="stat-label">小写字母</div></div>
+        <div class="stat-card purple"><div class="stat-icon"><i data-lucide="hash"></i></div><div class="stat-value" style="font-size:18px;">0-9</div><div class="stat-label">数字</div></div>
+    </div>
+</div>
+
+<div class="card">
+    <h2><i data-lucide="message-circle" class="icon-md"></i>常见问题</h2>
+    <div style="background:#f9fafb;padding:16px;border-radius:var(--radius-sm);margin-bottom:10px;">
+        <strong>Q: 绑定码是多少位？</strong>
+        <p style="font-size:13px;color:var(--text2);margin-top:4px;">8位大写字母和数字组合，每位用户唯一。</p>
+    </div>
+    <div style="background:#f9fafb;padding:16px;border-radius:var(--radius-sm);margin-bottom:10px;">
+        <strong>Q: 可以绑定多个共享伙伴吗？</strong>
+        <p style="font-size:13px;color:var(--text2);margin-top:4px;">可以。每个用户都能绑定多位伙伴，并针对每位伙伴分别设置饮食、目标和身体资料权限。</p>
+    </div>
+    <div style="background:#f9fafb;padding:16px;border-radius:var(--radius-sm);">
+        <strong>Q: 忘记密码怎么办？</strong>
+        <p style="font-size:13px;color:var(--text2);margin-top:4px;">当前版本暂不支持密码找回，请妥善保管密码。下版本将支持手机号重置。</p>
+    </div>
+</div>
+
+<div style="text-align:center;">
+    <a href="/profile" class="btn btn-secondary">&larr; 返回个人主页</a>
+</div>
+{% endblock %}

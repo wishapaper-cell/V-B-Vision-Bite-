@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}饮食记录{% endblock %}
+{% block page_title %}用户饮食记录{% endblock %}
+{% block page_desc %}按用户查看饮食日志、营养摄入和计划完成情况{% endblock %}
+{% block content %}
+<section class="panel">
+    <form class="filters" method="get">
+        <input name="q" value="{{ query }}" placeholder="搜索用户昵称或手机号">
+        <button class="btn primary">查询</button>
+        <a class="btn ghost" href="{{ url_for('diets') }}">重置</a>
+    </form>
+    <div class="table-wrap"><table><thead><tr><th>用户</th><th>健康目标</th><th>风险等级</th><th>全部记录</th><th>近30天热量</th><th>最近摄入</th><th>账号状态</th><th>操作</th></tr></thead><tbody>
+        {% set goals = {'weight_management':'体重管理','blood_sugar':'血糖管理','blood_pressure':'血压管理'} %}
+        {% set risks = {'low':'低风险','medium':'中风险','high':'高风险'} %}
+        {% for user in users %}
+        <tr>
+            <td><div class="user-cell"><span class="avatar">{{ user.nickname[:1] }}</span><div><strong>{{ user.nickname }}</strong><small>{{ user.phone }}</small></div></div></td>
+            <td>{{ goals.get(user.health_goal, '未设置') }}</td>
+            <td><span class="tag risk-{{ user.risk_level }}">{{ risks.get(user.risk_level, '低风险') }}</span></td>
+            <td><strong>{{ user.record_count }}</strong> 条</td>
+            <td>{{ user.calories_30d|round(1) }} kcal</td>
+            <td>{{ user.latest_intake or '暂无记录' }}</td>
+            <td><span class="tag {{ 'enabled' if user.active else 'disabled' }}">{{ '已启用' if user.active else '已禁用' }}</span></td>
+            <td class="actions-cell"><a class="btn small primary" href="{{ url_for('user_diets', user_id=user.id) }}">查看分析</a><a class="btn small ghost" href="{{ url_for('export_user', user_id=user.id) }}">导出</a></td>
+        </tr>
+        {% else %}<tr><td colspan="8" class="empty">没有找到用户</td></tr>{% endfor %}
+    </tbody></table></div>
+</section>
+{% endblock %}

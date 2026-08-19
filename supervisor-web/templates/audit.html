@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}操作日志{% endblock %}
+{% block page_title %}操作日志{% endblock %}
+{% block page_desc %}追踪管理端的登录与敏感数据操作{% endblock %}
+{% block content %}
+<section class="panel">
+    <div class="panel-head"><div><h2>最近 500 条日志</h2><p>日志用于安全审计，不提供页面删除功能</p></div></div>
+    <div class="table-wrap"><table><thead><tr><th>时间</th><th>管理员</th><th>操作</th><th>对象</th><th>详情</th><th>IP</th></tr></thead><tbody>{% for row in logs %}<tr><td>{{ row.created_at }}</td><td>{{ row.admin_name }}</td><td><strong>{{ row.action }}</strong></td><td>{{ row.target_type }} {{ row.target_id }}</td><td>{{ row.detail or '—' }}</td><td>{{ row.ip_address or '—' }}</td></tr>{% else %}<tr><td colspan="6" class="empty">暂无操作日志</td></tr>{% endfor %}</tbody></table></div>
+</section>
+{% endblock %}

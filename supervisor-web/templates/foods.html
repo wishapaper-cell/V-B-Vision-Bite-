@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}食物库{% endblock %}
+{% block page_title %}食材与营养数据{% endblock %}
+{% block page_desc %}维护单位、替代品及每 100g 完整营养数据{% endblock %}
+{% block content %}
+<section class="panel">
+    <div class="panel-head"><div><h2>新增或修改食物</h2><p>点击表格中的编辑按钮可自动填入</p></div><a class="btn ghost" href="{{ url_for('export_foods') }}">导出 CSV</a></div>
+    <form class="food-form" method="post" id="foodForm">
+        <input type="hidden" name="food_id" id="foodId">
+        <label>食物名称<input name="name" id="foodName" required></label><label>分类<input name="category" id="foodCategory" required></label><label>常用单位<input name="unit" id="foodUnit" value="g"></label><label>热量 kcal/100g<input type="number" step="0.1" min="0" name="calories" id="foodCalories" required></label>
+        <label>蛋白质 g<input type="number" step="0.1" min="0" name="protein" id="foodProtein" value="0"></label><label>脂肪 g<input type="number" step="0.1" min="0" name="fat" id="foodFat" value="0"></label><label>碳水 g<input type="number" step="0.1" min="0" name="carbs" id="foodCarbs" value="0"></label><label>膳食纤维 g<input type="number" step="0.1" min="0" name="fiber" id="foodFiber" value="0"></label>
+        <label>钠 mg<input type="number" step="0.1" min="0" name="sodium" id="foodSodium" value="0"></label><label>钾 mg<input type="number" step="0.1" min="0" name="potassium" id="foodPotassium" value="0"></label><label>钙 mg<input type="number" step="0.1" min="0" name="calcium" id="foodCalcium" value="0"></label><label>镁 mg<input type="number" step="0.1" min="0" name="magnesium" id="foodMagnesium" value="0"></label><label>铁 mg<input type="number" step="0.1" min="0" name="iron" id="foodIron" value="0"></label>
+        <label style="grid-column:span 2">可替代食物<textarea name="substitutes" id="foodSubstitutes" rows="2" placeholder="多个替代品可用逗号分隔"></textarea></label>
+        <div class="form-actions"><button class="btn primary">保存食物</button><button class="btn ghost" type="button" onclick="resetFood()">清空</button></div>
+    </form>
+</section>
+<section class="panel">
+    <div class="panel-head"><div><h2>食物数据</h2><p>共 {{ foods|length }} 种食物</p></div></div>
+    <div class="table-wrap"><table><thead><tr><th>名称</th><th>分类/单位</th><th>热量</th><th>蛋白质</th><th>脂肪</th><th>碳水</th><th>纤维</th><th>替代品</th><th>状态</th><th></th></tr></thead><tbody>
+        {% for food in foods %}<tr><td><strong>{{ food.name }}</strong></td><td>{{ food.category }}<small>{{ food.unit }}</small></td><td>{{ food.calories_per_100g }}</td><td>{{ food.protein_g }}</td><td>{{ food.fat_g }}</td><td>{{ food.carbs_g }}</td><td>{{ food.fiber_g }}</td><td>{{ food.substitutes or '—' }}</td><td><span class="tag {{ 'enabled' if food.active else 'disabled' }}">{{ '启用' if food.active else '停用' }}</span></td><td><div class="toolbar"><button type="button" class="link-button" onclick='editFood({{ food|tojson }})'>编辑</button><form method="post" action="{{ url_for('toggle_food_status', food_id=food.id) }}"><button class="link-button {{ 'danger-text' if food.active else '' }}">{{ '停用' if food.active else '启用' }}</button></form></div></td></tr>{% else %}<tr><td colspan="10" class="empty">暂无食物数据</td></tr>{% endfor %}
+    </tbody></table></div>
+</section>
+<script>
+function editFood(f){foodId.value=f.id;foodName.value=f.name;foodCategory.value=f.category;foodUnit.value=f.unit||'g';foodCalories.value=f.calories_per_100g;foodProtein.value=f.protein_g||0;foodFat.value=f.fat_g||0;foodCarbs.value=f.carbs_g||0;foodFiber.value=f.fiber_g||0;foodSodium.value=f.sodium_mg||0;foodPotassium.value=f.potassium_mg||0;foodCalcium.value=f.calcium_mg||0;foodMagnesium.value=f.magnesium_mg||0;foodIron.value=f.iron_mg||0;foodSubstitutes.value=f.substitutes||'';foodForm.scrollIntoView({behavior:'smooth'});}
+function resetFood(){foodForm.reset();foodId.value='';}
+</script>
+{% endblock %}
