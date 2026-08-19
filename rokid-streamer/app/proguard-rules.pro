@@ -1,0 +1,2 @@
+-keep class com.rokid.cxr.** { *; }
+-keep class com.healthydiet.rokidstreamer.model.** { *; }
