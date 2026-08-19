@@ -1,6 +1,6 @@
-# AdventureX NutritionGlass
-
+#
 NutritionGlass 是一个基于 Rokid RV101 的饮食识别与营养监管项目。单仓库包含用户端、监管端、眼镜推流应用、视频接收工具、食物识别服务和模型训练代码。
+![Uploading bf7451f3-b1f3-4825-8f67-8145d400fc8a.png…]()
 
 ## 仓库结构
 
